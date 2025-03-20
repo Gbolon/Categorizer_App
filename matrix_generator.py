@@ -97,17 +97,21 @@ class MatrixGenerator:
 
     def _update_progression_counts(self, current_cat, next_cat, progression_df, col):
         """Update progression counts based on category changes."""
-        if current_cat and next_cat:
-            current_idx = self.bracket_order.index(current_cat)
-            next_idx = self.bracket_order.index(next_cat)
-            change = next_idx - current_idx
+        if current_cat and next_cat and pd.notna(current_cat) and pd.notna(next_cat):
+            try:
+                current_idx = self.bracket_order.index(current_cat)
+                next_idx = self.bracket_order.index(next_cat)
+                change = next_idx - current_idx
 
-            if change == 1:  # Exactly one bracket improvement
-                progression_df.loc['Level Ups', col] += 1
-            elif change > 1:  # Multiple bracket improvement
-                progression_df.loc['Bracket Jumps', col] += 1
-            elif change < 0:  # Any regression
-                progression_df.loc['Regressors', col] += 1
+                if change == 1:  # Exactly one bracket improvement
+                    progression_df.loc['Level Ups', col] += 1
+                elif change > 1:  # Multiple bracket improvement
+                    progression_df.loc['Bracket Jumps', col] += 1
+                elif change < 0:  # Any regression
+                    progression_df.loc['Regressors', col] += 1
+            except ValueError:
+                # Skip if category is not in bracket_order
+                pass
 
     def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""
@@ -231,8 +235,13 @@ class MatrixGenerator:
         # Categorize each test instance
         for test in test_averages.index:
             score = test_averages[test]
+            if pd.isna(score):
+                brackets_df.loc[test, 'Category'] = None
+                brackets_df.loc[test, 'Score'] = 'N/A'
+                continue
+
             for category, (min_val, max_val) in self.development_brackets.items():
-                if pd.notnull(score) and min_val <= score <= max_val:
+                if min_val <= score <= max_val:
                     brackets_df.loc[test, 'Category'] = category
                     brackets_df.loc[test, 'Score'] = f"{score:.1f}%"
                     break
