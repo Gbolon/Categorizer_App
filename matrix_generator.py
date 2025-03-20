@@ -15,6 +15,44 @@ class MatrixGenerator:
             'Severely Under Developed': (0, 25)
         }
 
+    def generate_group_analysis(self, df):
+        """Generate group-level analysis of development categories."""
+        # Initialize count DataFrames for power and acceleration
+        categories = list(self.development_brackets.keys())
+        power_counts = pd.DataFrame(0, index=categories, columns=[])
+        accel_counts = pd.DataFrame(0, index=categories, columns=[])
+
+        # Get unique users
+        users = df['user name'].unique()
+
+        # Process each user
+        for user in users:
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user)
+
+            if matrices[2] is not None:  # If development matrices exist
+                _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
+
+                # Update columns if needed
+                for test in power_brackets.index:
+                    if test not in power_counts.columns:
+                        power_counts[test] = 0
+                        accel_counts[test] = 0
+
+                # Count categories for power
+                for test, row in power_brackets.iterrows():
+                    category = row['Category']
+                    if category in categories:
+                        power_counts.loc[category, test] += 1
+
+                # Count categories for acceleration
+                for test, row in accel_brackets.iterrows():
+                    category = row['Category']
+                    if category in categories:
+                        accel_counts.loc[category, test] += 1
+
+        return power_counts, accel_counts
+
     def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""
         user_data = df[df['user name'] == user_name].copy()

@@ -38,7 +38,26 @@ def main():
             st.subheader("Data Preview")
             st.dataframe(processed_df.head())
 
-            # User selection
+            # Generate group-level analysis
+            power_counts, accel_counts = matrix_generator.generate_group_analysis(processed_df)
+
+            # Display group-level analysis
+            st.subheader("Group Development Analysis")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.write("Power Development Distribution")
+                styled_power_counts = power_counts.style.format("{:.0f}")
+                st.dataframe(styled_power_counts)
+
+            with col2:
+                st.write("Acceleration Development Distribution")
+                styled_accel_counts = accel_counts.style.format("{:.0f}")
+                st.dataframe(styled_accel_counts)
+
+            # User selection for individual analysis
+            st.subheader("Individual User Analysis")
             users = data_processor.get_user_list(processed_df)
             selected_user = st.selectbox("Select User", users)
 
@@ -103,7 +122,9 @@ def main():
                     (accel_dev_matrix, "acceleration_development"),
                     (overall_dev_matrix, "overall_development"),
                     (power_brackets, "power_brackets"),
-                    (accel_brackets, "acceleration_brackets")
+                    (accel_brackets, "acceleration_brackets"),
+                    (power_counts, "power_group_analysis"),
+                    (accel_counts, "acceleration_group_analysis")
                 ]:
                     if matrix is not None:
                         st.download_button(
