@@ -54,9 +54,8 @@ class MatrixGenerator:
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
 
-                # Check if user has only one test
-                is_single_test_power = len(power_brackets) == 1 and 'Test 1' in power_brackets.index
-                is_single_test_accel = len(accel_brackets) == 1 and 'Test 1' in accel_brackets.index
+                # Determine if user has multiple tests
+                has_multiple_tests = len(power_brackets) >= 2
 
                 # Update columns if needed (limited to max_tests)
                 test_columns = [f"Test {i}" for i in range(1, max_tests + 1)]
@@ -65,48 +64,42 @@ class MatrixGenerator:
                         power_counts[test] = 0
                         accel_counts[test] = 0
 
-                # Process single test users separately
-                if is_single_test_power:
-                    category = power_brackets.loc['Test 1', 'Category']
-                    if category in self.development_brackets:
-                        single_test_distribution.loc[category, 'Power'] += 1
-                        single_test_distribution.loc['Total Users', 'Power'] += 1
+                if not has_multiple_tests:
+                    # Process single test users
+                    if 'Test 1' in power_brackets.index:
+                        category = power_brackets.loc['Test 1', 'Category']
+                        if category in self.development_brackets:
+                            single_test_distribution.loc[category, 'Power'] += 1
+                            single_test_distribution.loc['Total Users', 'Power'] += 1
 
-                if is_single_test_accel:
-                    category = accel_brackets.loc['Test 1', 'Category']
-                    if category in self.development_brackets:
-                        single_test_distribution.loc[category, 'Acceleration'] += 1
-                        single_test_distribution.loc['Total Users', 'Acceleration'] += 1
+                    if 'Test 1' in accel_brackets.index:
+                        category = accel_brackets.loc['Test 1', 'Category']
+                        if category in self.development_brackets:
+                            single_test_distribution.loc[category, 'Acceleration'] += 1
+                            single_test_distribution.loc['Total Users', 'Acceleration'] += 1
+                else:
+                    # Process multi-test users
+                    for test, row in power_brackets.iterrows():
+                        if test in test_columns:
+                            category = row['Category']
+                            if category in self.development_brackets:
+                                power_counts.loc[category, test] += 1
 
-                # Only include multi-test users in the main distribution tables
-                if not is_single_test_power:
-                    # Verify user has at least two tests before counting
-                    has_multiple_tests = len(power_brackets) >= 2
-                    if has_multiple_tests:
-                        # Count categories for power (limited to max_tests)
-                        for test, row in power_brackets.iterrows():
-                            if test in test_columns:
-                                category = row['Category']
-                                if category in self.development_brackets:
-                                    power_counts.loc[category, test] += 1
-                                    # Only increment total once per test instance
-                                    power_counts.loc['Total Users', test] += 1
+                    for test, row in accel_brackets.iterrows():
+                        if test in test_columns:
+                            category = row['Category']
+                            if category in self.development_brackets:
+                                accel_counts.loc[category, test] += 1
 
-                if not is_single_test_accel:
-                    # Verify user has at least two tests before counting
-                    has_multiple_tests = len(accel_brackets) >= 2
-                    if has_multiple_tests:
-                        # Count categories for acceleration (limited to max_tests)
-                        for test, row in accel_brackets.iterrows():
-                            if test in test_columns:
-                                category = row['Category']
-                                if category in self.development_brackets:
-                                    accel_counts.loc[category, test] += 1
-                                    # Only increment total once per test instance
-                                    accel_counts.loc['Total Users', test] += 1
+                    # Increment total users once for all test columns
+                    # This ensures the same total for all test columns
+                    for test in test_columns:
+                        if test in power_brackets.index:
+                            power_counts.loc['Total Users', test] += 1
+                        if test in accel_brackets.index:
+                            accel_counts.loc['Total Users', test] += 1
 
-                # Analyze progression for consecutive tests (only for multi-test users)
-                if not is_single_test_power and len(power_brackets) >= 2:
+                    # Process progression for multi-test users
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
                         next_test = test_columns[i+1]
@@ -121,12 +114,6 @@ class MatrixGenerator:
                                 power_progression, transition_col,
                                 power_transitions[transition_col]
                             )
-
-                if not is_single_test_accel and len(accel_brackets) >= 2:
-                    for i in range(len(test_columns)-1):
-                        current_test = test_columns[i]
-                        next_test = test_columns[i+1]
-                        transition_col = f'Test {i+1}-{i+2}'
 
                         # Acceleration progression
                         if current_test in accel_brackets.index and next_test in accel_brackets.index:
