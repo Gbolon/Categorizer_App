@@ -80,25 +80,33 @@ class MatrixGenerator:
 
                 # Only include multi-test users in the main distribution tables
                 if not is_single_test_power:
-                    # Count categories for power (limited to max_tests)
-                    for test, row in power_brackets.iterrows():
-                        if test in test_columns:
-                            category = row['Category']
-                            if category in self.development_brackets:
-                                power_counts.loc[category, test] += 1
-                                power_counts.loc['Total Users', test] += 1
+                    # Verify user has at least two tests before counting
+                    has_multiple_tests = len(power_brackets) >= 2
+                    if has_multiple_tests:
+                        # Count categories for power (limited to max_tests)
+                        for test, row in power_brackets.iterrows():
+                            if test in test_columns:
+                                category = row['Category']
+                                if category in self.development_brackets:
+                                    power_counts.loc[category, test] += 1
+                                    # Only increment total once per test instance
+                                    power_counts.loc['Total Users', test] += 1
 
                 if not is_single_test_accel:
-                    # Count categories for acceleration (limited to max_tests)
-                    for test, row in accel_brackets.iterrows():
-                        if test in test_columns:
-                            category = row['Category']
-                            if category in self.development_brackets:
-                                accel_counts.loc[category, test] += 1
-                                accel_counts.loc['Total Users', test] += 1
+                    # Verify user has at least two tests before counting
+                    has_multiple_tests = len(accel_brackets) >= 2
+                    if has_multiple_tests:
+                        # Count categories for acceleration (limited to max_tests)
+                        for test, row in accel_brackets.iterrows():
+                            if test in test_columns:
+                                category = row['Category']
+                                if category in self.development_brackets:
+                                    accel_counts.loc[category, test] += 1
+                                    # Only increment total once per test instance
+                                    accel_counts.loc['Total Users', test] += 1
 
                 # Analyze progression for consecutive tests (only for multi-test users)
-                if not is_single_test_power:
+                if not is_single_test_power and len(power_brackets) >= 2:
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
                         next_test = test_columns[i+1]
@@ -114,7 +122,7 @@ class MatrixGenerator:
                                 power_transitions[transition_col]
                             )
 
-                if not is_single_test_accel:
+                if not is_single_test_accel and len(accel_brackets) >= 2:
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
                         next_test = test_columns[i+1]
