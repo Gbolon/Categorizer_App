@@ -4,7 +4,8 @@ from exercise_constants import (
     VALID_EXERCISES,
     EXERCISE_DOMINANCE,
     is_valid_exercise_dominance,
-    get_full_exercise_name
+    get_full_exercise_name,
+    standardize_dominance
 )
 
 class DataProcessor:
@@ -32,7 +33,7 @@ class DataProcessor:
 
         for _, row in df.iterrows():
             exercise_name = row['exercise name']
-            dominance = row['dominance']
+            dominance = standardize_dominance(row['dominance'])
 
             if exercise_name not in valid_base_exercises:
                 invalid_exercises.append(f"Invalid exercise: {exercise_name}")
@@ -53,6 +54,9 @@ class DataProcessor:
         # Create a copy to avoid modifying original data
         processed_df = df.copy()
 
+        # Standardize dominance values
+        processed_df['dominance'] = processed_df['dominance'].apply(standardize_dominance)
+
         # Filter valid exercises and dominance combinations
         valid_rows = []
         for idx, row in processed_df.iterrows():
@@ -72,6 +76,10 @@ class DataProcessor:
 
         # Sort by user and timestamp
         processed_df = processed_df.sort_values(['user name', 'exercise createdAt'])
+
+        # Debug logging
+        print("Processed data shape:", processed_df.shape)
+        print("Unique exercises:", processed_df['full_exercise_name'].unique())
 
         return processed_df
 
