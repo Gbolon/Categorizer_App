@@ -66,17 +66,21 @@ class MatrixGenerator:
 
                 if not has_multiple_tests:
                     # Process single test users
-                    if 'Test 1' in power_brackets.index:
-                        category = power_brackets.loc['Test 1', 'Category']
-                        if category in self.development_brackets:
-                            single_test_distribution.loc[category, 'Power'] += 1
-                            single_test_distribution.loc['Total Users', 'Power'] += 1
+                    if 'Test 1' in power_brackets.index and 'Test 1' in accel_brackets.index:
+                        # Get categories for both power and acceleration
+                        power_category = power_brackets.loc['Test 1', 'Category']
+                        accel_category = accel_brackets.loc['Test 1', 'Category']
 
-                    if 'Test 1' in accel_brackets.index:
-                        category = accel_brackets.loc['Test 1', 'Category']
-                        if category in self.development_brackets:
-                            single_test_distribution.loc[category, 'Acceleration'] += 1
+                        # Only count if both categories are valid
+                        if (power_category in self.development_brackets and 
+                            accel_category in self.development_brackets):
+                            # Increment category counts
+                            single_test_distribution.loc[power_category, 'Power'] += 1
+                            single_test_distribution.loc[accel_category, 'Acceleration'] += 1
+                            # Increment total users (same for both columns)
+                            single_test_distribution.loc['Total Users', 'Power'] += 1
                             single_test_distribution.loc['Total Users', 'Acceleration'] += 1
+
                 else:
                     # Process multi-test users
                     for test, row in power_brackets.iterrows():
