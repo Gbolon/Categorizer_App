@@ -1,6 +1,11 @@
 import pandas as pd
 import numpy as np
-from exercise_constants import VALID_EXERCISES, REQUIRES_DOMINANCE, get_full_exercise_name
+from exercise_constants import (
+    VALID_EXERCISES,
+    EXERCISE_DOMINANCE,
+    is_valid_exercise_dominance,
+    get_full_exercise_name
+)
 
 class DataProcessor:
     def __init__(self):
@@ -21,6 +26,26 @@ class DataProcessor:
         if empty_cols:
             return False, f"Empty values found in columns: {', '.join(empty_cols)}"
 
+        # Validate exercise names and dominance combinations
+        valid_base_exercises = [ex for cat in VALID_EXERCISES.values() for ex in cat]
+        invalid_exercises = []
+
+        for _, row in df.iterrows():
+            exercise_name = row['exercise name']
+            dominance = row['dominance']
+
+            if exercise_name not in valid_base_exercises:
+                invalid_exercises.append(f"Invalid exercise: {exercise_name}")
+                continue
+
+            if not is_valid_exercise_dominance(exercise_name, dominance):
+                invalid_exercises.append(
+                    f"Invalid dominance '{dominance}' for exercise '{exercise_name}'"
+                )
+
+        if invalid_exercises:
+            return False, "Data validation failed:\n" + "\n".join(invalid_exercises[:5])
+
         return True, "Data validation successful"
 
     def preprocess_data(self, df):
@@ -28,19 +53,17 @@ class DataProcessor:
         # Create a copy to avoid modifying original data
         processed_df = df.copy()
 
-        # Validate exercise names
-        valid_base_exercises = [ex for cat in VALID_EXERCISES.values() for ex in cat]
-        mask = processed_df['exercise name'].isin(valid_base_exercises)
+        # Filter valid exercises and dominance combinations
+        valid_rows = []
+        for idx, row in processed_df.iterrows():
+            if is_valid_exercise_dominance(row['exercise name'], row['dominance']):
+                valid_rows.append(idx)
 
-        # Filter only valid exercises
-        processed_df = processed_df[mask].copy()
+        processed_df = processed_df.loc[valid_rows].copy()
 
         # Generate full exercise names
         processed_df['full_exercise_name'] = processed_df.apply(
-            lambda row: get_full_exercise_name(
-                row['exercise name'],
-                row['dominance'] if REQUIRES_DOMINANCE[row['exercise name']] else None
-            ),
+            lambda row: get_full_exercise_name(row['exercise name'], row['dominance']),
             axis=1
         )
 

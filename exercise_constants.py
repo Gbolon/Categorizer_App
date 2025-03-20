@@ -20,23 +20,37 @@ VALID_EXERCISES = {
     ]
 }
 
-# Define which exercises require dominance
-REQUIRES_DOMINANCE = {
-    'Straight Arm Trunk Rotation': True,
-    'Shot Put (Countermovement)': False,
-    'PNF D2 Flexion': True,
-    'PNF D2 Extension': True,
-    'Biceps Curl (One Hand)': True,
-    'Triceps Extension (One Hand)': True,
-    'Horizontal Row (One Hand)': True,
-    'Chest Press (One Hand)': True,
-    'Lateral Bound': True,
-    'Vertical Jump (Countermovement)': False
+# Define which exercises require dominance and valid dominance values
+EXERCISE_DOMINANCE = {
+    'Straight Arm Trunk Rotation': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Shot Put (Countermovement)': {'required': False, 'values': []},
+    'PNF D2 Flexion': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'PNF D2 Extension': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Biceps Curl (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Triceps Extension (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Horizontal Row (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Chest Press (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Lateral Bound': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Vertical Jump (Countermovement)': {'required': False, 'values': []}
 }
+
+def is_valid_exercise_dominance(exercise_name, dominance):
+    """Validate if exercise name and dominance combination is valid."""
+    if exercise_name not in EXERCISE_DOMINANCE:
+        return False
+
+    exercise_config = EXERCISE_DOMINANCE[exercise_name]
+    if not exercise_config['required']:
+        return True
+
+    return dominance in exercise_config['values']
 
 def get_full_exercise_name(exercise_name, dominance=None):
     """Generate full exercise name with dominance if required."""
-    if REQUIRES_DOMINANCE[exercise_name] and dominance:
+    if not exercise_name in EXERCISE_DOMINANCE:
+        return None
+
+    if EXERCISE_DOMINANCE[exercise_name]['required'] and dominance:
         return f"{exercise_name} ({dominance})"
     return exercise_name
 
@@ -44,7 +58,7 @@ def get_full_exercise_name(exercise_name, dominance=None):
 ALL_EXERCISES = []
 for exercises in VALID_EXERCISES.values():
     for exercise in exercises:
-        if REQUIRES_DOMINANCE[exercise]:
+        if EXERCISE_DOMINANCE[exercise]['required']:
             ALL_EXERCISES.extend([
                 get_full_exercise_name(exercise, "Dominant"),
                 get_full_exercise_name(exercise, "Non-Dominant")
