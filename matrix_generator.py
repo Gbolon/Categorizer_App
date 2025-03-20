@@ -121,16 +121,16 @@ class MatrixGenerator:
             try:
                 current_idx = self.bracket_order.index(current_cat)
                 next_idx = self.bracket_order.index(next_cat)
-                change = next_idx - current_idx
+                change = current_idx - next_idx  # Reverse the comparison for clarity
 
                 transition = (current_cat, next_cat)
-                if change == 1:  # Exactly one bracket improvement
+                if change == -1:  # Level Up (moving up one bracket)
                     progression_df.loc['Level Ups', col] += 1
                     transitions['level_ups'].append(transition)
-                elif change > 1:  # Multiple bracket improvement
+                elif change < -1:  # Bracket Jump (moving up multiple brackets)
                     progression_df.loc['Bracket Jumps', col] += 1
                     transitions['jumps'].append(transition)
-                elif change < 0:  # Any regression
+                elif change > 0:  # Regression (moving down any number of brackets)
                     progression_df.loc['Regressors', col] += 1
                     transitions['regressors'].append(transition)
 
@@ -156,11 +156,19 @@ class MatrixGenerator:
             # Convert to DataFrame
             rows = []
             for (from_bracket, to_bracket), count in transition_counts.items():
-                rows.append({
-                    'From Bracket': from_bracket,
-                    'To Bracket': to_bracket,
-                    'Count': count
-                })
+                # For regressors, we want to show movement from higher to lower brackets
+                if transition_type == 'regressors':
+                    rows.append({
+                        'From Bracket': to_bracket,  # Swap for regressors to show correct direction
+                        'To Bracket': from_bracket,
+                        'Count': count
+                    })
+                else:
+                    rows.append({
+                        'From Bracket': from_bracket,
+                        'To Bracket': to_bracket,
+                        'Count': count
+                    })
 
             if rows:
                 df = pd.DataFrame(rows)
