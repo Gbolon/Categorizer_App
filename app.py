@@ -15,9 +15,9 @@ def style_transition_matrix(matrix):
         else:
             return 'background-color: #e6ffe6'  # pale green for below diagonal (improvement)
 
-    return matrix.style.format("{:.0f}").apply(lambda x: [color_cells(v, i, j) 
-                                                         for j, v in enumerate(x)], 
-                                              axis=1)
+    return matrix.style.format("{:.0f}").apply(lambda x: [color_cells(v, x.name, j) 
+                                                          for j, v in enumerate(x)], 
+                                               axis=1)
 
 def main():
     st.title("Exercise Test Instance Matrix Generator")
