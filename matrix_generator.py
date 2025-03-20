@@ -17,18 +17,18 @@ class MatrixGenerator:
         }
         # Define bracket order for progression analysis
         self.bracket_order = [
-            'Severely Under Developed',
-            'Under Developed',
-            'Average',
-            'Above Average',
+            'Goal Hit',
             'Elite',
-            'Goal Hit'
+            'Above Average',
+            'Average',
+            'Under Developed',
+            'Severely Under Developed'
         ]
         # Define colors for transition types
         self.transition_colors = {
-            'level_up': 'rgba(44, 160, 44, 0.6)',  # Green
-            'regression': 'rgba(214, 39, 40, 0.6)', # Red
-            'jump': 'rgba(31, 119, 180, 0.6)'      # Blue
+            'level_up': 'rgba(31, 119, 180, 0.6)',  # Blue
+            'regression': 'rgba(214, 39, 40, 0.6)',  # Red
+            'jump': 'rgba(44, 160, 44, 0.6)'        # Green
         }
 
     def generate_group_analysis(self, df, max_tests=4):
@@ -148,12 +148,23 @@ class MatrixGenerator:
         if not transitions:
             return None
 
-        # Create nodes list and map categories to indices
-        unique_categories = list(set(
-            [t['source'] for t in transitions] + 
-            [t['target'] for t in transitions]
-        ))
-        cat_to_idx = {cat: idx for idx, cat in enumerate(unique_categories)}
+        # Create nodes list for all test instances (1-3)
+        all_categories = self.bracket_order
+        nodes = []
+        node_labels = []
+        cat_to_idx = {}
+
+        # Create nodes for each test instance (1-3)
+        for test_num in range(3):
+            for cat in all_categories:
+                idx = len(nodes)
+                nodes.append(dict(
+                    label=f"{cat}<br>Test {test_num+1}",
+                    x=test_num/2,  # Evenly space across width
+                    y=all_categories.index(cat)/len(all_categories)  # Vertical position
+                ))
+                cat_to_idx[(cat, test_num)] = idx
+                node_labels.append(cat)
 
         # Initialize source, target, and value lists
         sources = []
@@ -168,11 +179,16 @@ class MatrixGenerator:
             transition_counts[key] = transition_counts.get(key, 0) + 1
 
         # Create Sankey data
-        for (source, target, t_type), count in transition_counts.items():
-            sources.append(cat_to_idx[source])
-            targets.append(cat_to_idx[target])
-            values.append(count)
-            colors.append(self.transition_colors[t_type])
+        for test_num in range(2):  # Connect test 1->2 and 2->3
+            for (source, target, t_type), count in transition_counts.items():
+                if source in all_categories and target in all_categories:
+                    source_idx = cat_to_idx.get((source, test_num))
+                    target_idx = cat_to_idx.get((target, test_num + 1))
+                    if source_idx is not None and target_idx is not None:
+                        sources.append(source_idx)
+                        targets.append(target_idx)
+                        values.append(count)
+                        colors.append(self.transition_colors[t_type])
 
         # Create the figure
         fig = go.Figure(data=[go.Sankey(
@@ -180,7 +196,9 @@ class MatrixGenerator:
                 pad=15,
                 thickness=20,
                 line=dict(color="black", width=0.5),
-                label=unique_categories,
+                label=[n['label'] for n in nodes],
+                x=[n['x'] for n in nodes],
+                y=[n['y'] for n in nodes],
                 color="lightgray"
             ),
             link=dict(
@@ -191,7 +209,14 @@ class MatrixGenerator:
             )
         )])
 
-        fig.update_layout(title_text=title, font_size=10)
+        # Update layout
+        fig.update_layout(
+            title_text=title,
+            font_size=10,
+            height=800,  # Increase height for better vertical visibility
+            width=1000   # Increase width for better spacing
+        )
+
         return fig
 
     def generate_user_matrices(self, df, user_name):
