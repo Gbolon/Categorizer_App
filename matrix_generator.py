@@ -42,7 +42,7 @@ class MatrixGenerator:
             columns=[f'Test {i}-{i+1}' for i in range(1, max_tests)])
         accel_progression = power_progression.copy()
 
-        # Initialize transition tracking for level ups
+        # Initialize transition tracking for all movements
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
 
@@ -80,7 +80,6 @@ class MatrixGenerator:
                             # Increment total users (same for both columns)
                             single_test_distribution.loc['Total Users', 'Power'] += 1
                             single_test_distribution.loc['Total Users', 'Acceleration'] += 1
-
                 else:
                     # Process multi-test users
                     for test, row in power_brackets.iterrows():
@@ -129,12 +128,17 @@ class MatrixGenerator:
                                 accel_transitions[transition_col]
                             )
 
-        # Analyze level up patterns
+        # Analyze transition patterns
         power_patterns = self._analyze_transition_patterns(power_transitions)
         accel_patterns = self._analyze_transition_patterns(accel_transitions)
 
-        return (power_counts, accel_counts, power_progression, accel_progression, 
-                power_patterns, accel_patterns, single_test_distribution)
+        # Generate detailed transition matrices
+        power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
+        accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
+
+        return (power_counts, accel_counts, power_progression, accel_progression,
+                power_patterns, accel_patterns, single_test_distribution,
+                power_transitions_detail, accel_transitions_detail)
 
     def _update_progression_counts(self, current_cat, next_cat, progression_df, col, transitions_list):
         """Update progression counts based on category changes."""
@@ -144,9 +148,11 @@ class MatrixGenerator:
                 next_idx = self.bracket_order.index(next_cat)
                 change = next_idx - current_idx
 
+                # Always record the transition for detailed analysis
+                transitions_list.append((current_cat, next_cat))
+
                 if change == 1:  # Exactly one bracket improvement
                     progression_df.loc['Level Ups', col] += 1
-                    transitions_list.append((current_cat, next_cat))
                 elif change > 1:  # Multiple bracket improvement
                     progression_df.loc['Bracket Jumps', col] += 1
                 elif change < 0:  # Any regression
@@ -155,6 +161,28 @@ class MatrixGenerator:
             except ValueError:
                 # Skip if category is not in bracket_order
                 pass
+
+    def _analyze_detailed_transitions(self, transitions_dict):
+        """
+        Create a detailed transition matrix showing all movements between brackets.
+        This includes both improvements and regressions.
+        """
+        transition_matrices = {}
+
+        for period, transitions in transitions_dict.items():
+            # Create a transition matrix for each period
+            matrix = pd.DataFrame(0, 
+                index=self.bracket_order,
+                columns=self.bracket_order)
+
+            # Count all transitions
+            for from_bracket, to_bracket in transitions:
+                if from_bracket in self.bracket_order and to_bracket in self.bracket_order:
+                    matrix.loc[from_bracket, to_bracket] += 1
+
+            transition_matrices[period] = matrix
+
+        return transition_matrices
 
     def _analyze_transition_patterns(self, transitions_dict):
         """Analyze common transition patterns for level ups."""

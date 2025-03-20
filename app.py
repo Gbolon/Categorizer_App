@@ -14,7 +14,7 @@ def main():
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
-                                   type=['csv', 'xlsx'])
+                                      type=['csv', 'xlsx'])
 
     if uploaded_file is not None:
         try:
@@ -40,7 +40,8 @@ def main():
 
             # Generate group-level analysis
             (power_counts, accel_counts, power_progression, accel_progression,
-             power_patterns, accel_patterns, single_test_distribution) = matrix_generator.generate_group_analysis(processed_df)
+             power_patterns, accel_patterns, single_test_distribution,
+             power_transitions_detail, accel_transitions_detail) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.subheader("Group Development Analysis")
@@ -58,6 +59,27 @@ def main():
             st.write("Multi-Test Users Acceleration Development Distribution")
             styled_accel_counts = accel_counts.style.format("{:.0f}")
             st.dataframe(styled_accel_counts, use_container_width=True)
+
+            # Display detailed transition analysis
+            st.subheader("Detailed Transition Analysis")
+
+            # Power transitions
+            st.write("Power Development Transitions")
+            for period, matrix in power_transitions_detail.items():
+                st.write(f"Period: {period}")
+                styled_matrix = matrix.style.format("{:.0f}").background_gradient(cmap='RdYlGn', axis=None)
+                st.dataframe(styled_matrix, use_container_width=True)
+                st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
+                st.write("---")
+
+            # Acceleration transitions
+            st.write("Acceleration Development Transitions")
+            for period, matrix in accel_transitions_detail.items():
+                st.write(f"Period: {period}")
+                styled_matrix = matrix.style.format("{:.0f}").background_gradient(cmap='RdYlGn', axis=None)
+                st.dataframe(styled_matrix, use_container_width=True)
+                st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
+                st.write("---")
 
             # Display progression analysis in columns
             st.subheader("Progression Analysis")
