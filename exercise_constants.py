@@ -2,7 +2,6 @@
 VALID_EXERCISES = {
     'Torso': [
         'Straight Arm Trunk Rotation',
-        'Straight Arm Trunk Rotation (Plyo)',
         'Shot Put (Countermovement)'
     ],
     'Arms': [
@@ -28,7 +27,6 @@ VALID_EXERCISES = {
 # Define which exercises require dominance and valid dominance values
 EXERCISE_DOMINANCE = {
     'Straight Arm Trunk Rotation': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
-    'Straight Arm Trunk Rotation (Plyo)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
     'Shot Put (Countermovement)': {'required': False, 'values': []},
     'PNF D2 Flexion': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
     'PNF D2 Extension': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
