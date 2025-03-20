@@ -57,9 +57,13 @@ class MatrixGenerator:
         if user_sex:
             power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
             accel_dev_df = self._calculate_development_matrix(accel_df, user_sex, 'acceleration')
-            return power_df, accel_df, power_dev_df, accel_dev_df
 
-        return power_df, accel_df, None, None
+            # Calculate overall development categorization
+            overall_dev_df = self._calculate_overall_development(power_dev_df, accel_dev_df)
+
+            return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df
+
+        return power_df, accel_df, None, None, None
 
     def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
@@ -87,3 +91,24 @@ class MatrixGenerator:
                 )
 
         return dev_matrix
+
+    def _calculate_overall_development(self, power_dev_df, accel_dev_df):
+        """Calculate overall development categorization for each test instance."""
+        # Initialize a new DataFrame for overall development
+        overall_dev = pd.DataFrame(index=['Power Average', 'Acceleration Average', 'Overall Average'])
+
+        # Calculate averages for each test instance
+        for col in power_dev_df.columns:
+            # Calculate power average (excluding NaN values)
+            power_avg = power_dev_df[col].mean(skipna=True)
+
+            # Calculate acceleration average (excluding NaN values)
+            accel_avg = accel_dev_df[col].mean(skipna=True)
+
+            # Calculate overall average
+            overall_avg = np.mean([power_avg, accel_avg])
+
+            # Add to overall development DataFrame
+            overall_dev[col] = [power_avg, accel_avg, overall_avg]
+
+        return overall_dev

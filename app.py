@@ -47,7 +47,7 @@ def main():
                 matrices = matrix_generator.generate_user_matrices(
                     processed_df, selected_user)
 
-                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix = matrices
+                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix = matrices
 
                 # Display raw value matrices
                 st.subheader("Raw Value Matrices")
@@ -70,6 +70,12 @@ def main():
                     styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%")
                     st.dataframe(styled_accel_dev)
 
+                    # Display overall development categorization
+                    if overall_dev_matrix is not None:
+                        st.subheader("Overall Development Categorization")
+                        styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%")
+                        st.dataframe(styled_overall_dev)
+
                 # Export functionality
                 st.subheader("Export Data")
 
@@ -80,7 +86,8 @@ def main():
                     (power_matrix, "power"),
                     (accel_matrix, "acceleration"),
                     (power_dev_matrix, "power_development"),
-                    (accel_dev_matrix, "acceleration_development")
+                    (accel_dev_matrix, "acceleration_development"),
+                    (overall_dev_matrix, "overall_development")
                 ]:
                     if matrix is not None:
                         st.download_button(
