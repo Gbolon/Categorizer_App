@@ -1,4 +1,5 @@
 """Goal standards for exercise movements based on sex."""
+import pandas as pd
 
 POWER_STANDARDS = {
     'male': {
