@@ -83,53 +83,51 @@ class MatrixGenerator:
 
                 else:
                     # Process multi-test users
-                    valid_power_tests = []
-                    valid_accel_tests = []
-
-                    # First, identify which tests have valid data
                     for test, row in power_brackets.iterrows():
-                        if test in test_columns and row['Category'] in self.development_brackets:
-                            valid_power_tests.append(test)
-                            power_counts.loc[row['Category'], test] += 1
-                            power_counts.loc['Total Users', test] += 1
+                        if test in test_columns:
+                            category = row['Category']
+                            if category in self.development_brackets:
+                                power_counts.loc[category, test] += 1
 
                     for test, row in accel_brackets.iterrows():
-                        if test in test_columns and row['Category'] in self.development_brackets:
-                            valid_accel_tests.append(test)
-                            accel_counts.loc[row['Category'], test] += 1
+                        if test in test_columns:
+                            category = row['Category']
+                            if category in self.development_brackets:
+                                accel_counts.loc[category, test] += 1
+
+                    # Increment total users once for all test columns
+                    # This ensures the same total for all test columns
+                    for test in test_columns:
+                        if test in power_brackets.index:
+                            power_counts.loc['Total Users', test] += 1
+                        if test in accel_brackets.index:
                             accel_counts.loc['Total Users', test] += 1
 
-                    # Only process progression if we have valid consecutive tests
+                    # Process progression for multi-test users
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
                         next_test = test_columns[i+1]
                         transition_col = f'Test {i+1}-{i+2}'
 
-                        # Power progression - only if both tests are valid
-                        if (current_test in valid_power_tests and 
-                            next_test in valid_power_tests):
+                        # Power progression
+                        if current_test in power_brackets.index and next_test in power_brackets.index:
                             current_cat = power_brackets.loc[current_test, 'Category']
                             next_cat = power_brackets.loc[next_test, 'Category']
-                            if (current_cat in self.development_brackets and 
-                                next_cat in self.development_brackets):
-                                self._update_progression_counts(
-                                    current_cat, next_cat,
-                                    power_progression, transition_col,
-                                    power_transitions[transition_col]
-                                )
+                            self._update_progression_counts(
+                                current_cat, next_cat, 
+                                power_progression, transition_col,
+                                power_transitions[transition_col]
+                            )
 
-                        # Acceleration progression - only if both tests are valid
-                        if (current_test in valid_accel_tests and 
-                            next_test in valid_accel_tests):
+                        # Acceleration progression
+                        if current_test in accel_brackets.index and next_test in accel_brackets.index:
                             current_cat = accel_brackets.loc[current_test, 'Category']
                             next_cat = accel_brackets.loc[next_test, 'Category']
-                            if (current_cat in self.development_brackets and 
-                                next_cat in self.development_brackets):
-                                self._update_progression_counts(
-                                    current_cat, next_cat,
-                                    accel_progression, transition_col,
-                                    accel_transitions[transition_col]
-                                )
+                            self._update_progression_counts(
+                                current_cat, next_cat, 
+                                accel_progression, transition_col,
+                                accel_transitions[transition_col]
+                            )
 
         # Analyze level up patterns
         power_patterns = self._analyze_transition_patterns(power_transitions)
