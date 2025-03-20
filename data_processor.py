@@ -28,6 +28,12 @@ class DataProcessor:
         if empty_cols:
             return False, f"Empty values found in columns: {', '.join(empty_cols)}"
 
+        # Validate power and acceleration columns contain numeric values
+        numeric_cols = ['power - high', 'acceleration - high']
+        for col in numeric_cols:
+            if not pd.to_numeric(df[col], errors='coerce').notnull().all():
+                return False, f"Non-numeric values found in {col} column"
+
         # Validate sex values if present
         valid_sex_values = ['male', 'female', 'Male', 'Female', 'MALE', 'FEMALE']
         non_empty_sex = df['sex'].dropna()
@@ -42,6 +48,13 @@ class DataProcessor:
         """Clean and prepare the data for matrix generation."""
         # Create a copy to avoid modifying original data
         processed_df = df.copy()
+
+        # Ensure power and acceleration values are numeric
+        processed_df['power - high'] = pd.to_numeric(processed_df['power - high'], errors='coerce')
+        processed_df['acceleration - high'] = pd.to_numeric(processed_df['acceleration - high'], errors='coerce')
+
+        # Remove rows where either power or acceleration is NaN
+        processed_df = processed_df.dropna(subset=['power - high', 'acceleration - high'])
 
         # Fill empty sex values with 'male'
         if 'sex' in processed_df.columns:
