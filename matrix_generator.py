@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
 from exercise_constants import ALL_EXERCISES
 from goal_standards import calculate_development_score
 
@@ -24,12 +23,6 @@ class MatrixGenerator:
             'Under Developed',
             'Severely Under Developed'
         ]
-        # Define colors for transition types
-        self.transition_colors = {
-            'level_up': 'rgba(31, 119, 180, 0.6)',  # Blue
-            'regression': 'rgba(214, 39, 40, 0.6)',  # Red
-            'jump': 'rgba(44, 160, 44, 0.6)'        # Green
-        }
 
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
@@ -46,10 +39,6 @@ class MatrixGenerator:
             index=['Level Ups', 'Regressors', 'Bracket Jumps'],
             columns=[f'Test {i}-{i+1}' for i in range(1, max_tests)])
         accel_progression = power_progression.copy()
-
-        # Initialize transition tracking
-        power_transitions = []
-        accel_transitions = []
 
         # Process each user
         for user in users:
@@ -92,8 +81,7 @@ class MatrixGenerator:
                         next_cat = power_brackets.loc[next_test, 'Category']
                         self._update_progression_counts(
                             current_cat, next_cat, 
-                            power_progression, transition_col,
-                            power_transitions
+                            power_progression, transition_col
                         )
 
                     # Acceleration progression
@@ -102,17 +90,12 @@ class MatrixGenerator:
                         next_cat = accel_brackets.loc[next_test, 'Category']
                         self._update_progression_counts(
                             current_cat, next_cat, 
-                            accel_progression, transition_col,
-                            accel_transitions
+                            accel_progression, transition_col
                         )
 
-        # Generate Sankey diagrams
-        power_sankey = self._create_sankey_diagram(power_transitions, "Power Development Transitions")
-        accel_sankey = self._create_sankey_diagram(accel_transitions, "Acceleration Development Transitions")
+        return power_counts, accel_counts, power_progression, accel_progression
 
-        return power_counts, accel_counts, power_progression, accel_progression, power_sankey, accel_sankey
-
-    def _update_progression_counts(self, current_cat, next_cat, progression_df, col, transitions):
+    def _update_progression_counts(self, current_cat, next_cat, progression_df, col):
         """Update progression counts based on category changes."""
         if current_cat and next_cat and pd.notna(current_cat) and pd.notna(next_cat):
             try:
@@ -120,104 +103,16 @@ class MatrixGenerator:
                 next_idx = self.bracket_order.index(next_cat)
                 change = next_idx - current_idx
 
-                # Record transition
-                transition_type = None
-                if change == 1:  # Level Up
+                if change == 1:  # Exactly one bracket improvement
                     progression_df.loc['Level Ups', col] += 1
-                    transition_type = 'level_up'
-                elif change > 1:  # Bracket Jump
+                elif change > 1:  # Multiple bracket improvement
                     progression_df.loc['Bracket Jumps', col] += 1
-                    transition_type = 'jump'
-                elif change < 0:  # Regression
+                elif change < 0:  # Any regression
                     progression_df.loc['Regressors', col] += 1
-                    transition_type = 'regression'
-
-                if transition_type:
-                    transitions.append({
-                        'source': current_cat,
-                        'target': next_cat,
-                        'type': transition_type
-                    })
 
             except ValueError:
                 # Skip if category is not in bracket_order
                 pass
-
-    def _create_sankey_diagram(self, transitions, title):
-        """Create a Sankey diagram from recorded transitions."""
-        if not transitions:
-            return None
-
-        # Create nodes list for all test instances (1-3)
-        all_categories = self.bracket_order
-        nodes = []
-        node_labels = []
-        cat_to_idx = {}
-
-        # Create nodes for each test instance (1-3)
-        for test_num in range(3):
-            for cat in all_categories:
-                idx = len(nodes)
-                nodes.append(dict(
-                    label=f"{cat}<br>Test {test_num+1}",
-                    x=test_num/2,  # Evenly space across width
-                    y=all_categories.index(cat)/len(all_categories)  # Vertical position
-                ))
-                cat_to_idx[(cat, test_num)] = idx
-                node_labels.append(cat)
-
-        # Initialize source, target, and value lists
-        sources = []
-        targets = []
-        values = []
-        colors = []
-
-        # Count transitions
-        transition_counts = {}
-        for t in transitions:
-            key = (t['source'], t['target'], t['type'])
-            transition_counts[key] = transition_counts.get(key, 0) + 1
-
-        # Create Sankey data
-        for test_num in range(2):  # Connect test 1->2 and 2->3
-            for (source, target, t_type), count in transition_counts.items():
-                if source in all_categories and target in all_categories:
-                    source_idx = cat_to_idx.get((source, test_num))
-                    target_idx = cat_to_idx.get((target, test_num + 1))
-                    if source_idx is not None and target_idx is not None:
-                        sources.append(source_idx)
-                        targets.append(target_idx)
-                        values.append(count)
-                        colors.append(self.transition_colors[t_type])
-
-        # Create the figure
-        fig = go.Figure(data=[go.Sankey(
-            node=dict(
-                pad=15,
-                thickness=20,
-                line=dict(color="black", width=0.5),
-                label=[n['label'] for n in nodes],
-                x=[n['x'] for n in nodes],
-                y=[n['y'] for n in nodes],
-                color="lightgray"
-            ),
-            link=dict(
-                source=sources,
-                target=targets,
-                value=values,
-                color=colors
-            )
-        )])
-
-        # Update layout
-        fig.update_layout(
-            title_text=title,
-            font_size=10,
-            height=800,  # Increase height for better vertical visibility
-            width=1000   # Increase width for better spacing
-        )
-
-        return fig
 
     def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""
