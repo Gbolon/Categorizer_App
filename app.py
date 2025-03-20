@@ -3,6 +3,7 @@ import pandas as pd
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from exercise_constants import VALID_EXERCISES
+from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
 def main():
     st.title("Exercise Test Instance Matrix Generator")
@@ -92,12 +93,37 @@ def main():
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")
 
-    # Display exercise information
-    with st.expander("View Tracked Exercises"):
+    # Display exercise information with standards
+    with st.expander("View Tracked Exercises and Goal Standards"):
         for category, exercises in VALID_EXERCISES.items():
             st.subheader(category)
+
+            # Create a DataFrame to display standards
+            standards_data = []
             for exercise in exercises:
-                st.write(f"• {exercise}")
+                male_power = POWER_STANDARDS['male'][exercise]
+                male_accel = ACCELERATION_STANDARDS['male'][exercise]
+                female_power = POWER_STANDARDS['female'][exercise]
+                female_accel = ACCELERATION_STANDARDS['female'][exercise]
+
+                standards_data.append({
+                    'Exercise': exercise,
+                    'Male Power': male_power,
+                    'Male Acceleration': male_accel,
+                    'Female Power': female_power,
+                    'Female Acceleration': female_accel
+                })
+
+            # Display standards table
+            if standards_data:
+                df_standards = pd.DataFrame(standards_data)
+                styled_standards = df_standards.style.format({
+                    'Male Power': '{:.0f}',
+                    'Male Acceleration': '{:.0f}',
+                    'Female Power': '{:.0f}',
+                    'Female Acceleration': '{:.0f}'
+                })
+                st.dataframe(styled_standards, use_container_width=True)
 
 if __name__ == "__main__":
     main()
