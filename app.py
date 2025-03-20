@@ -43,35 +43,51 @@ def main():
 
             if selected_user:
                 # Generate matrices
-                power_matrix, accel_matrix = matrix_generator.generate_user_matrices(
+                matrices = matrix_generator.generate_user_matrices(
                     processed_df, selected_user)
 
-                # Display matrices
-                st.subheader("Power Matrix")
+                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix = matrices
+
+                # Display raw value matrices
+                st.subheader("Raw Value Matrices")
+
+                st.write("Power Matrix (Raw Values)")
                 st.dataframe(power_matrix)
 
-                st.subheader("Acceleration Matrix")
+                st.write("Acceleration Matrix (Raw Values)")
                 st.dataframe(accel_matrix)
+
+                # Display development matrices if available
+                if power_dev_matrix is not None and accel_dev_matrix is not None:
+                    st.subheader("Development Score Matrices (%)")
+
+                    st.write("Power Development Matrix")
+                    styled_power_dev = power_dev_matrix.style.format("{:.1f}%")
+                    st.dataframe(styled_power_dev)
+
+                    st.write("Acceleration Development Matrix")
+                    styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%")
+                    st.dataframe(styled_accel_dev)
 
                 # Export functionality
                 st.subheader("Export Data")
 
-                def download_matrix(matrix, metric):
+                def download_matrix(matrix, name):
                     return matrix.to_csv().encode('utf-8')
 
-                st.download_button(
-                    label=f"Download Power Matrix CSV",
-                    data=download_matrix(power_matrix, "power"),
-                    file_name=f"{selected_user}_power_matrix.csv",
-                    mime="text/csv"
-                )
-
-                st.download_button(
-                    label=f"Download Acceleration Matrix CSV",
-                    data=download_matrix(accel_matrix, "acceleration"),
-                    file_name=f"{selected_user}_acceleration_matrix.csv",
-                    mime="text/csv"
-                )
+                for matrix, name in [
+                    (power_matrix, "power"),
+                    (accel_matrix, "acceleration"),
+                    (power_dev_matrix, "power_development"),
+                    (accel_dev_matrix, "acceleration_development")
+                ]:
+                    if matrix is not None:
+                        st.download_button(
+                            label=f"Download {name.replace('_', ' ').title()} Matrix CSV",
+                            data=download_matrix(matrix, name),
+                            file_name=f"{selected_user}_{name}_matrix.csv",
+                            mime="text/csv"
+                        )
 
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")

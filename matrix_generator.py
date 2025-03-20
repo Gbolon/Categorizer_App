@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from exercise_constants import ALL_EXERCISES
+from goal_standards import calculate_development_score
 
 class MatrixGenerator:
     def __init__(self):
@@ -10,12 +11,13 @@ class MatrixGenerator:
         """Generate test instance matrices for a specific user."""
         user_data = df[df['user name'] == user_name].copy()
 
-        # Initialize matrices for power and acceleration
+        # Initialize matrices
         power_matrix = {}
         accel_matrix = {}
-
-        # Track exercises in each test instance
         test_instances = {}
+
+        # Get user's sex for development calculations
+        user_sex = user_data['sex'].iloc[0].lower() if not user_data.empty else None
 
         # Process each exercise chronologically
         for _, row in user_data.iterrows():
@@ -48,7 +50,16 @@ class MatrixGenerator:
                 if exercise not in accel_matrix[instance]:
                     accel_matrix[instance][exercise] = np.nan
 
-        return self._convert_to_dataframes(power_matrix, accel_matrix)
+        # Convert to DataFrames
+        power_df, accel_df = self._convert_to_dataframes(power_matrix, accel_matrix)
+
+        # Generate development matrices if sex is available
+        if user_sex:
+            power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
+            accel_dev_df = self._calculate_development_matrix(accel_df, user_sex, 'acceleration')
+            return power_df, accel_df, power_dev_df, accel_dev_df
+
+        return power_df, accel_df, None, None
 
     def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
@@ -63,3 +74,16 @@ class MatrixGenerator:
         accel_df.columns = [f"Test {i}" for i in range(1, len(accel_df.columns) + 1)]
 
         return power_df, accel_df
+
+    def _calculate_development_matrix(self, metric_df, sex, metric_type):
+        """Calculate development scores for each value in the matrix."""
+        dev_matrix = metric_df.copy()
+
+        for col in dev_matrix.columns:
+            for idx in dev_matrix.index:
+                value = metric_df.loc[idx, col]
+                dev_matrix.loc[idx, col] = calculate_development_score(
+                    value, idx, sex, metric_type
+                )
+
+        return dev_matrix
