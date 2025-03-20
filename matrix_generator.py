@@ -200,25 +200,29 @@ class MatrixGenerator:
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
             return power_matrix, accel_matrix, None, None, None, None, None
 
-        # Process each exercise chronologically
+        # Process each exercise chronologically and keep power/acceleration paired
         for _, row in user_data.iterrows():
             exercise = row['full_exercise_name']
+            power_value = row['power - high']
+            accel_value = row['acceleration - high']
 
-            # Find earliest available test instance for this exercise
-            target_instance = 1
-            while target_instance in test_instances and exercise in test_instances[target_instance]:
-                target_instance += 1
+            # Only process if both power and acceleration are present
+            if pd.notna(power_value) and pd.notna(accel_value):
+                # Find earliest available test instance for this exercise
+                target_instance = 1
+                while target_instance in test_instances and exercise in test_instances[target_instance]:
+                    target_instance += 1
 
-            # Initialize new test instance if needed
-            if target_instance not in power_matrix:
-                power_matrix[target_instance] = {}
-                accel_matrix[target_instance] = {}
-                test_instances[target_instance] = set()
+                # Initialize new test instance if needed
+                if target_instance not in power_matrix:
+                    power_matrix[target_instance] = {}
+                    accel_matrix[target_instance] = {}
+                    test_instances[target_instance] = set()
 
-            # Add exercise data to matrices
-            power_matrix[target_instance][exercise] = row['power - high']
-            accel_matrix[target_instance][exercise] = row['acceleration - high']
-            test_instances[target_instance].add(exercise)
+                # Add exercise data to matrices as a pair
+                power_matrix[target_instance][exercise] = power_value
+                accel_matrix[target_instance][exercise] = accel_value
+                test_instances[target_instance].add(exercise)
 
         # Fill empty cells with NaN
         for instance in power_matrix:
