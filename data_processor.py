@@ -17,21 +17,24 @@ class DataProcessor:
 
     def validate_data(self, df):
         """Validate only the required columns and their presence."""
-        # Check required columns
-        missing_cols = [col for col in self.required_columns if col not in df.columns]
+        # Check required columns (except sex which can be empty)
+        required_non_empty = [col for col in self.required_columns if col != 'sex']
+        missing_cols = [col for col in required_non_empty if col not in df.columns]
         if missing_cols:
             return False, f"Missing required columns: {', '.join(missing_cols)}"
 
-        # Check for empty values in required columns
-        empty_cols = [col for col in self.required_columns if df[col].isna().any()]
+        # Check for empty values in required columns (except sex)
+        empty_cols = [col for col in required_non_empty if df[col].isna().any()]
         if empty_cols:
             return False, f"Empty values found in columns: {', '.join(empty_cols)}"
 
-        # Validate sex values
+        # Validate sex values if present
         valid_sex_values = ['male', 'female', 'Male', 'Female', 'MALE', 'FEMALE']
-        invalid_sex = ~df['sex'].str.lower().isin(['male', 'female']) if isinstance(df['sex'], pd.Series) else True
-        if invalid_sex.any():
-            return False, "Invalid values in sex column. Must be 'male' or 'female'"
+        non_empty_sex = df['sex'].dropna()
+        if len(non_empty_sex) > 0:
+            invalid_sex = ~non_empty_sex.str.lower().isin(['male', 'female'])
+            if invalid_sex.any():
+                return False, "Invalid values in sex column. Must be 'male' or 'female' when specified"
 
         return True, "Data validation successful"
 
@@ -39,6 +42,12 @@ class DataProcessor:
         """Clean and prepare the data for matrix generation."""
         # Create a copy to avoid modifying original data
         processed_df = df.copy()
+
+        # Fill empty sex values with 'male'
+        if 'sex' in processed_df.columns:
+            processed_df['sex'] = processed_df['sex'].fillna('male')
+        else:
+            processed_df['sex'] = 'male'
 
         # Standardize sex values to lowercase
         processed_df['sex'] = processed_df['sex'].str.lower()
