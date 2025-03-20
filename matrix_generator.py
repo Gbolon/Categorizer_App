@@ -6,6 +6,14 @@ from goal_standards import calculate_development_score
 class MatrixGenerator:
     def __init__(self):
         self.exercises = ALL_EXERCISES
+        self.development_brackets = {
+            'Goal Hit': (100, float('inf')),
+            'Elite': (90, 99.99),
+            'Above Average': (76, 90),
+            'Average': (51, 75),
+            'Under Developed': (26, 50),
+            'Severely Under Developed': (0, 25)
+        }
 
     def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""
@@ -39,9 +47,6 @@ class MatrixGenerator:
             accel_matrix[target_instance][exercise] = row['acceleration - high']
             test_instances[target_instance].add(exercise)
 
-            # Print debug information
-            print(f"Added {exercise} to test instance {target_instance}")
-
         # Fill empty cells with NaN
         for instance in power_matrix:
             for exercise in self.exercises:
@@ -61,9 +66,13 @@ class MatrixGenerator:
             # Calculate overall development categorization
             overall_dev_df = self._calculate_overall_development(power_dev_df, accel_dev_df)
 
-            return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df
+            # Add bracketing information
+            power_brackets = self._categorize_development(power_dev_df)
+            accel_brackets = self._categorize_development(accel_dev_df)
 
-        return power_df, accel_df, None, None, None
+            return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
+
+        return power_df, accel_df, None, None, None, None, None
 
     def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
@@ -100,10 +109,10 @@ class MatrixGenerator:
         # Calculate averages for each test instance
         for col in power_dev_df.columns:
             # Calculate power average (excluding NaN values)
-            power_avg = power_dev_df[col].mean(skipna=True)
+            power_avg = power_dev_df[col].apply(lambda x: min(x, 100) if pd.notnull(x) else x).mean(skipna=True)
 
             # Calculate acceleration average (excluding NaN values)
-            accel_avg = accel_dev_df[col].mean(skipna=True)
+            accel_avg = accel_dev_df[col].apply(lambda x: min(x, 100) if pd.notnull(x) else x).mean(skipna=True)
 
             # Calculate overall average
             overall_avg = np.mean([power_avg, accel_avg])
@@ -112,3 +121,24 @@ class MatrixGenerator:
             overall_dev[col] = [power_avg, accel_avg, overall_avg]
 
         return overall_dev
+
+    def _categorize_development(self, dev_matrix):
+        """Categorize development scores into brackets."""
+        # Initialize DataFrame for bracketing
+        brackets_df = pd.DataFrame(index=dev_matrix.columns, columns=['Category', 'Score'])
+
+        # Calculate overall average for each test instance (capped at 100%)
+        test_averages = dev_matrix.apply(
+            lambda x: x.apply(lambda y: min(y, 100) if pd.notnull(y) else y).mean(skipna=True)
+        )
+
+        # Categorize each test instance
+        for test in test_averages.index:
+            score = test_averages[test]
+            for category, (min_val, max_val) in self.development_brackets.items():
+                if pd.notnull(score) and min_val <= score <= max_val:
+                    brackets_df.loc[test, 'Category'] = category
+                    brackets_df.loc[test, 'Score'] = f"{score:.1f}%"
+                    break
+
+        return brackets_df

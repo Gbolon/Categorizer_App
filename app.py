@@ -47,7 +47,7 @@ def main():
                 matrices = matrix_generator.generate_user_matrices(
                     processed_df, selected_user)
 
-                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix = matrices
+                power_matrix, accel_matrix, power_dev_matrix, accel_dev_matrix, overall_dev_matrix, power_brackets, accel_brackets = matrices
 
                 # Display raw value matrices
                 st.subheader("Raw Value Matrices")
@@ -76,6 +76,20 @@ def main():
                         styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%")
                         st.dataframe(styled_overall_dev)
 
+                    # Display development brackets
+                    if power_brackets is not None and accel_brackets is not None:
+                        st.subheader("Development Brackets")
+
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+                            st.write("Power Development Brackets")
+                            st.dataframe(power_brackets)
+
+                        with col2:
+                            st.write("Acceleration Development Brackets")
+                            st.dataframe(accel_brackets)
+
                 # Export functionality
                 st.subheader("Export Data")
 
@@ -87,7 +101,9 @@ def main():
                     (accel_matrix, "acceleration"),
                     (power_dev_matrix, "power_development"),
                     (accel_dev_matrix, "acceleration_development"),
-                    (overall_dev_matrix, "overall_development")
+                    (overall_dev_matrix, "overall_development"),
+                    (power_brackets, "power_brackets"),
+                    (accel_brackets, "acceleration_brackets")
                 ]:
                     if matrix is not None:
                         st.download_button(
