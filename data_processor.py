@@ -16,7 +16,7 @@ class DataProcessor:
         ]
 
     def validate_data(self, df):
-        """Validate the uploaded data format and content."""
+        """Validate only the required columns and their presence."""
         # Check required columns
         missing_cols = [col for col in self.required_columns if col not in df.columns]
         if missing_cols:
@@ -27,45 +27,7 @@ class DataProcessor:
         if empty_cols:
             return False, f"Empty values found in columns: {', '.join(empty_cols)}"
 
-        # Get base exercises list
-        valid_base_exercises = [ex for cat in VALID_EXERCISES.values() for ex in cat]
-
-        # Pre-filter to remove variations we want to ignore
-        df = self._filter_standard_exercises(df, valid_base_exercises)
-
-        # Validate remaining exercise names and dominance combinations
-        invalid_exercises = []
-        for _, row in df.iterrows():
-            exercise_name = row['exercise name']
-            dominance = standardize_dominance(row['dominance'])
-
-            if exercise_name not in valid_base_exercises:
-                invalid_exercises.append(f"Invalid exercise: {exercise_name}")
-                continue
-
-            if not is_valid_exercise_dominance(exercise_name, dominance):
-                invalid_exercises.append(
-                    f"Invalid dominance '{dominance}' for exercise '{exercise_name}'"
-                )
-
-        if invalid_exercises:
-            return False, "Data validation failed:\n" + "\n".join(invalid_exercises[:5])
-
         return True, "Data validation successful"
-
-    def _filter_standard_exercises(self, df, valid_exercises):
-        """Filter out non-standard exercise variations."""
-        # Create a series of boolean masks for each valid exercise
-        masks = []
-        for valid_exercise in valid_exercises:
-            # Match exact exercise names or remove known variations
-            mask = (df['exercise name'] == valid_exercise) | \
-                   (~df['exercise name'].str.contains('Plyo', case=False, na=False))
-            masks.append(mask)
-
-        # Combine all masks
-        final_mask = pd.concat(masks, axis=1).all(axis=1)
-        return df[final_mask].copy()
 
     def preprocess_data(self, df):
         """Clean and prepare the data for matrix generation."""
@@ -75,8 +37,8 @@ class DataProcessor:
         # Get valid base exercises
         valid_base_exercises = [ex for cat in VALID_EXERCISES.values() for ex in cat]
 
-        # Pre-filter to remove variations we want to ignore
-        processed_df = self._filter_standard_exercises(processed_df, valid_base_exercises)
+        # Filter to keep only the specified exercises
+        processed_df = processed_df[processed_df['exercise name'].isin(valid_base_exercises)].copy()
 
         # Standardize dominance values
         processed_df['dominance'] = processed_df['dominance'].apply(standardize_dominance)
