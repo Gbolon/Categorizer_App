@@ -7,19 +7,17 @@ from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
 def style_transition_matrix(matrix):
     """Apply color coding to transition matrix."""
-    styles = []
-    for i in range(len(matrix.index)):
-        for j in range(len(matrix.columns)):
-            color = '#e6e6ff'  # pale blue for diagonal
-            if i < j:
-                color = '#ffe6e6'  # pale red for above diagonal (regression)
-            elif i > j:
-                color = '#e6ffe6'  # pale green for below diagonal (improvement)
-            styles.append({
-                'selector': f'tbody tr:nth-child({i+1}) td:nth-child({j+1})',
-                'props': [('background-color', color)]
-            })
-    return matrix.style.format("{:.0f}").set_table_styles(styles)
+    def color_cells(val, i, j):
+        if i == j:
+            return 'background-color: #e6e6ff'  # pale blue for diagonal
+        elif i < j:
+            return 'background-color: #ffe6e6'  # pale red for above diagonal (regression)
+        else:
+            return 'background-color: #e6ffe6'  # pale green for below diagonal (improvement)
+
+    return matrix.style.format("{:.0f}").apply(lambda x: [color_cells(v, i, j) 
+                                                         for j, v in enumerate(x)], 
+                                              axis=1)
 
 def main():
     st.title("Exercise Test Instance Matrix Generator")
