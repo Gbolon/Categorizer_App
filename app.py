@@ -45,35 +45,37 @@ def main():
             # Display group-level analysis
             st.subheader("Group Development Analysis")
 
-            # Power Analysis Section
-            st.write("Power Development Distribution")
-            styled_power_counts = power_counts.style.format("{:.0f}")
-            st.dataframe(styled_power_counts, use_container_width=True)
+            col1, col2 = st.columns(2)
 
-            st.write("Power Progression Analysis")
-            styled_power_prog = power_progression.style.format("{:.0f}")
-            st.dataframe(styled_power_prog, use_container_width=True)
+            with col1:
+                st.write("Power Development Distribution")
+                styled_power_counts = power_counts.style.format("{:.0f}")
+                st.dataframe(styled_power_counts)
 
-            st.write("Power Level-Up Patterns")
-            styled_power_patterns = power_patterns.style.format({
-                'Count': '{:.0f}'
-            })
-            st.dataframe(styled_power_patterns, use_container_width=True)
+                st.write("Power Progression Analysis")
+                styled_power_prog = power_progression.style.format("{:.0f}")
+                st.dataframe(styled_power_prog)
 
-            # Acceleration Analysis Section
-            st.write("Acceleration Development Distribution")
-            styled_accel_counts = accel_counts.style.format("{:.0f}")
-            st.dataframe(styled_accel_counts, use_container_width=True)
+                st.write("Power Level-Up Patterns")
+                styled_power_patterns = power_patterns.style.format({
+                    'Count': '{:.0f}'
+                })
+                st.dataframe(styled_power_patterns)
 
-            st.write("Acceleration Progression Analysis")
-            styled_accel_prog = accel_progression.style.format("{:.0f}")
-            st.dataframe(styled_accel_prog, use_container_width=True)
+            with col2:
+                st.write("Acceleration Development Distribution")
+                styled_accel_counts = accel_counts.style.format("{:.0f}")
+                st.dataframe(styled_accel_counts)
 
-            st.write("Acceleration Level-Up Patterns")
-            styled_accel_patterns = accel_patterns.style.format({
-                'Count': '{:.0f}'
-            })
-            st.dataframe(styled_accel_patterns, use_container_width=True)
+                st.write("Acceleration Progression Analysis")
+                styled_accel_prog = accel_progression.style.format("{:.0f}")
+                st.dataframe(styled_accel_prog)
+
+                st.write("Acceleration Level-Up Patterns")
+                styled_accel_patterns = accel_patterns.style.format({
+                    'Count': '{:.0f}'
+                })
+                st.dataframe(styled_accel_patterns)
 
             # User selection for individual analysis
             st.subheader("Individual User Analysis")

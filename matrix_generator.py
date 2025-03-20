@@ -28,8 +28,8 @@ class MatrixGenerator:
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
-        power_counts = pd.DataFrame(0, index=categories, columns=['One Time Users'])
-        accel_counts = pd.DataFrame(0, index=categories, columns=['One Time Users'])
+        power_counts = pd.DataFrame(0, index=categories, columns=[])
+        accel_counts = pd.DataFrame(0, index=categories, columns=[])
 
         # Initialize progression analysis DataFrames
         power_progression = pd.DataFrame(0, 
@@ -41,14 +41,6 @@ class MatrixGenerator:
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
 
-        # First, identify users with multiple tests
-        user_test_counts = {}
-        for user in df['user name'].unique():
-            matrices = self.generate_user_matrices(df, user)
-            if matrices[2] is not None:  # If development matrices exist
-                _, _, _, _, _, power_brackets, _ = matrices
-                user_test_counts[user] = len(power_brackets)
-
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
@@ -57,69 +49,56 @@ class MatrixGenerator:
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
 
-                # Determine if user is one-time tester
-                test_count = user_test_counts[user]
-                is_one_time = test_count == 1
-
-                # Add test columns if needed
+                # Update columns if needed (limited to max_tests)
                 test_columns = [f"Test {i}" for i in range(1, max_tests + 1)]
                 for test in test_columns:
                     if test not in power_counts.columns:
                         power_counts[test] = 0
                         accel_counts[test] = 0
 
-                # Process power brackets
+                # Count categories for power (limited to max_tests)
                 for test, row in power_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
                         if category in self.development_brackets.keys():
-                            if is_one_time:
-                                power_counts.loc[category, 'One Time Users'] += 1
-                                power_counts.loc['Total Users', 'One Time Users'] += 1
-                            else:
-                                power_counts.loc[category, test] += 1
-                                power_counts.loc['Total Users', test] += 1
+                            power_counts.loc[category, test] += 1
+                            # Increment total users for this test
+                            power_counts.loc['Total Users', test] += 1
 
-                # Process acceleration brackets
+                # Count categories for acceleration (limited to max_tests)
                 for test, row in accel_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
                         if category in self.development_brackets.keys():
-                            if is_one_time:
-                                accel_counts.loc[category, 'One Time Users'] += 1
-                                accel_counts.loc['Total Users', 'One Time Users'] += 1
-                            else:
-                                accel_counts.loc[category, test] += 1
-                                accel_counts.loc['Total Users', test] += 1
+                            accel_counts.loc[category, test] += 1
+                            # Increment total users for this test
+                            accel_counts.loc['Total Users', test] += 1
 
-                # Only analyze progression for users with multiple tests
-                if not is_one_time:
-                    for i in range(len(test_columns)-1):
-                        current_test = test_columns[i]
-                        next_test = test_columns[i+1]
+                # Analyze progression for consecutive tests
+                for i in range(len(test_columns)-1):
+                    current_test = test_columns[i]
+                    next_test = test_columns[i+1]
+                    transition_col = f'Test {i+1}-{i+2}'
 
-                        # Only process if user has both tests
-                        if (current_test in power_brackets.index and 
-                            next_test in power_brackets.index):
-                            transition_col = f'Test {i+1}-{i+2}'
+                    # Power progression
+                    if current_test in power_brackets.index and next_test in power_brackets.index:
+                        current_cat = power_brackets.loc[current_test, 'Category']
+                        next_cat = power_brackets.loc[next_test, 'Category']
+                        self._update_progression_counts(
+                            current_cat, next_cat, 
+                            power_progression, transition_col,
+                            power_transitions[transition_col]
+                        )
 
-                            # Power progression
-                            current_cat = power_brackets.loc[current_test, 'Category']
-                            next_cat = power_brackets.loc[next_test, 'Category']
-                            self._update_progression_counts(
-                                current_cat, next_cat, 
-                                power_progression, transition_col,
-                                power_transitions[transition_col]
-                            )
-
-                            # Acceleration progression
-                            current_cat = accel_brackets.loc[current_test, 'Category']
-                            next_cat = accel_brackets.loc[next_test, 'Category']
-                            self._update_progression_counts(
-                                current_cat, next_cat, 
-                                accel_progression, transition_col,
-                                accel_transitions[transition_col]
-                            )
+                    # Acceleration progression
+                    if current_test in accel_brackets.index and next_test in accel_brackets.index:
+                        current_cat = accel_brackets.loc[current_test, 'Category']
+                        next_cat = accel_brackets.loc[next_test, 'Category']
+                        self._update_progression_counts(
+                            current_cat, next_cat, 
+                            accel_progression, transition_col,
+                            accel_transitions[transition_col]
+                        )
 
         # Analyze level up patterns
         power_patterns = self._analyze_transition_patterns(power_transitions)
