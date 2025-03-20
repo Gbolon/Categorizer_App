@@ -63,7 +63,12 @@ class MatrixGenerator:
         test_instances = {}
 
         # Get user's sex for development calculations
-        user_sex = user_data['sex'].iloc[0].lower() if not user_data.empty else None
+        if user_data.empty:
+            return power_matrix, accel_matrix, None, None, None, None, None
+
+        user_sex = user_data['sex'].iloc[0]
+        if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
+            return power_matrix, accel_matrix, None, None, None, None, None
 
         # Process each exercise chronologically
         for _, row in user_data.iterrows():
@@ -97,20 +102,17 @@ class MatrixGenerator:
         power_df, accel_df = self._convert_to_dataframes(power_matrix, accel_matrix)
 
         # Generate development matrices if sex is available
-        if user_sex:
-            power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
-            accel_dev_df = self._calculate_development_matrix(accel_df, user_sex, 'acceleration')
+        power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
+        accel_dev_df = self._calculate_development_matrix(accel_df, user_sex, 'acceleration')
 
-            # Calculate overall development categorization
-            overall_dev_df = self._calculate_overall_development(power_dev_df, accel_dev_df)
+        # Calculate overall development categorization
+        overall_dev_df = self._calculate_overall_development(power_dev_df, accel_dev_df)
 
-            # Add bracketing information
-            power_brackets = self._categorize_development(power_dev_df)
-            accel_brackets = self._categorize_development(accel_dev_df)
+        # Add bracketing information
+        power_brackets = self._categorize_development(power_dev_df)
+        accel_brackets = self._categorize_development(accel_dev_df)
 
-            return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
-
-        return power_df, accel_df, None, None, None, None, None
+        return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
 
     def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""

@@ -12,7 +12,7 @@ class DataProcessor:
     def __init__(self):
         self.required_columns = [
             'user name', 'exercise name', 'dominance', 'exercise createdAt',
-            'power - high', 'acceleration - high'
+            'power - high', 'acceleration - high', 'sex'
         ]
 
     def validate_data(self, df):
@@ -27,12 +27,21 @@ class DataProcessor:
         if empty_cols:
             return False, f"Empty values found in columns: {', '.join(empty_cols)}"
 
+        # Validate sex values
+        valid_sex_values = ['male', 'female', 'Male', 'Female', 'MALE', 'FEMALE']
+        invalid_sex = ~df['sex'].str.lower().isin(['male', 'female']) if isinstance(df['sex'], pd.Series) else True
+        if invalid_sex.any():
+            return False, "Invalid values in sex column. Must be 'male' or 'female'"
+
         return True, "Data validation successful"
 
     def preprocess_data(self, df):
         """Clean and prepare the data for matrix generation."""
         # Create a copy to avoid modifying original data
         processed_df = df.copy()
+
+        # Standardize sex values to lowercase
+        processed_df['sex'] = processed_df['sex'].str.lower()
 
         # Get valid base exercises
         valid_base_exercises = [ex for cat in VALID_EXERCISES.values() for ex in cat]
@@ -62,10 +71,6 @@ class DataProcessor:
 
         # Sort by user and timestamp
         processed_df = processed_df.sort_values(['user name', 'exercise createdAt'])
-
-        # Debug logging
-        print("Processed data shape:", processed_df.shape)
-        print("Unique exercises:", processed_df['full_exercise_name'].unique())
 
         return processed_df
 
