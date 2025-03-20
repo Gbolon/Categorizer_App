@@ -27,12 +27,9 @@ class MatrixGenerator:
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
-        categories = list(self.development_brackets.keys())
+        categories = list(self.development_brackets.keys()) + ['Total Users']
         power_counts = pd.DataFrame(0, index=categories, columns=[])
         accel_counts = pd.DataFrame(0, index=categories, columns=[])
-
-        # Get unique users
-        users = df['user name'].unique()
 
         # Initialize progression analysis DataFrames
         power_progression = pd.DataFrame(0, 
@@ -41,7 +38,7 @@ class MatrixGenerator:
         accel_progression = power_progression.copy()
 
         # Process each user
-        for user in users:
+        for user in df['user name'].unique():
             # Generate matrices for user
             matrices = self.generate_user_matrices(df, user)
 
@@ -59,15 +56,19 @@ class MatrixGenerator:
                 for test, row in power_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
-                        if category in categories:
+                        if category in self.development_brackets.keys():
                             power_counts.loc[category, test] += 1
+                            # Increment total users for this test
+                            power_counts.loc['Total Users', test] += 1
 
                 # Count categories for acceleration (limited to max_tests)
                 for test, row in accel_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
-                        if category in categories:
+                        if category in self.development_brackets.keys():
                             accel_counts.loc[category, test] += 1
+                            # Increment total users for this test
+                            accel_counts.loc['Total Users', test] += 1
 
                 # Analyze progression for consecutive tests
                 for i in range(len(test_columns)-1):
