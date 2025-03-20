@@ -27,10 +27,14 @@ class DataProcessor:
         if empty_cols:
             return False, f"Empty values found in columns: {', '.join(empty_cols)}"
 
-        # Validate exercise names and dominance combinations
+        # Get base exercises list
         valid_base_exercises = [ex for cat in VALID_EXERCISES.values() for ex in cat]
-        invalid_exercises = []
 
+        # Pre-filter to remove variations we want to ignore
+        df = self._filter_standard_exercises(df, valid_base_exercises)
+
+        # Validate remaining exercise names and dominance combinations
+        invalid_exercises = []
         for _, row in df.iterrows():
             exercise_name = row['exercise name']
             dominance = standardize_dominance(row['dominance'])
@@ -49,10 +53,30 @@ class DataProcessor:
 
         return True, "Data validation successful"
 
+    def _filter_standard_exercises(self, df, valid_exercises):
+        """Filter out non-standard exercise variations."""
+        # Create a series of boolean masks for each valid exercise
+        masks = []
+        for valid_exercise in valid_exercises:
+            # Match exact exercise names or remove known variations
+            mask = (df['exercise name'] == valid_exercise) | \
+                   (~df['exercise name'].str.contains('Plyo', case=False, na=False))
+            masks.append(mask)
+
+        # Combine all masks
+        final_mask = pd.concat(masks, axis=1).all(axis=1)
+        return df[final_mask].copy()
+
     def preprocess_data(self, df):
         """Clean and prepare the data for matrix generation."""
         # Create a copy to avoid modifying original data
         processed_df = df.copy()
+
+        # Get valid base exercises
+        valid_base_exercises = [ex for cat in VALID_EXERCISES.values() for ex in cat]
+
+        # Pre-filter to remove variations we want to ignore
+        processed_df = self._filter_standard_exercises(processed_df, valid_base_exercises)
 
         # Standardize dominance values
         processed_df['dominance'] = processed_df['dominance'].apply(standardize_dominance)
