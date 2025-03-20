@@ -8,11 +8,15 @@ VALID_EXERCISES = {
         'PNF D2 Flexion',
         'PNF D2 Extension',
         'Biceps Curl (One Hand)',
-        'Triceps Extension (One Hand)'
+        'Biceps Curl (Two Hand)',
+        'Triceps Extension (One Hand)',
+        'Triceps Extension (Two Hand)'
     ],
     'Press/Pull': [
         'Horizontal Row (One Hand)',
-        'Chest Press (One Hand)'
+        'Horizontal Row (Two Hand)',
+        'Chest Press (One Hand)',
+        'Chest Press (Two Hand)'
     ],
     'Legs': [
         'Lateral Bound',
@@ -27,9 +31,13 @@ EXERCISE_DOMINANCE = {
     'PNF D2 Flexion': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
     'PNF D2 Extension': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
     'Biceps Curl (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Biceps Curl (Two Hand)': {'required': False, 'values': []},
     'Triceps Extension (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Triceps Extension (Two Hand)': {'required': False, 'values': []},
     'Horizontal Row (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Horizontal Row (Two Hand)': {'required': False, 'values': []},
     'Chest Press (One Hand)': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
+    'Chest Press (Two Hand)': {'required': False, 'values': []},
     'Lateral Bound': {'required': True, 'values': ['Dominant', 'Non-Dominant']},
     'Vertical Jump (Countermovement)': {'required': False, 'values': []}
 }
