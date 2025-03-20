@@ -14,6 +14,15 @@ class MatrixGenerator:
             'Under Developed': (26, 50),
             'Severely Under Developed': (0, 25)
         }
+        # Define bracket order for progression analysis
+        self.bracket_order = [
+            'Severely Under Developed',
+            'Under Developed',
+            'Average',
+            'Above Average',
+            'Elite',
+            'Goal Hit'
+        ]
 
     def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
@@ -24,6 +33,12 @@ class MatrixGenerator:
 
         # Get unique users
         users = df['user name'].unique()
+
+        # Initialize progression analysis DataFrames
+        power_progression = pd.DataFrame(0, 
+            index=['Level Ups', 'Regressors', 'Bracket Jumps'],
+            columns=[f'Test {i}-{i+1}' for i in range(1, max_tests)])
+        accel_progression = power_progression.copy()
 
         # Process each user
         for user in users:
@@ -54,7 +69,45 @@ class MatrixGenerator:
                         if category in categories:
                             accel_counts.loc[category, test] += 1
 
-        return power_counts, accel_counts
+                # Analyze progression for consecutive tests
+                for i in range(len(test_columns)-1):
+                    current_test = test_columns[i]
+                    next_test = test_columns[i+1]
+                    transition_col = f'Test {i+1}-{i+2}'
+
+                    # Power progression
+                    if current_test in power_brackets.index and next_test in power_brackets.index:
+                        current_cat = power_brackets.loc[current_test, 'Category']
+                        next_cat = power_brackets.loc[next_test, 'Category']
+                        self._update_progression_counts(
+                            current_cat, next_cat, 
+                            power_progression, transition_col
+                        )
+
+                    # Acceleration progression
+                    if current_test in accel_brackets.index and next_test in accel_brackets.index:
+                        current_cat = accel_brackets.loc[current_test, 'Category']
+                        next_cat = accel_brackets.loc[next_test, 'Category']
+                        self._update_progression_counts(
+                            current_cat, next_cat, 
+                            accel_progression, transition_col
+                        )
+
+        return power_counts, accel_counts, power_progression, accel_progression
+
+    def _update_progression_counts(self, current_cat, next_cat, progression_df, col):
+        """Update progression counts based on category changes."""
+        if current_cat and next_cat:
+            current_idx = self.bracket_order.index(current_cat)
+            next_idx = self.bracket_order.index(next_cat)
+            change = next_idx - current_idx
+
+            if change == 1:  # Exactly one bracket improvement
+                progression_df.loc['Level Ups', col] += 1
+            elif change > 1:  # Multiple bracket improvement
+                progression_df.loc['Bracket Jumps', col] += 1
+            elif change < 0:  # Any regression
+                progression_df.loc['Regressors', col] += 1
 
     def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""

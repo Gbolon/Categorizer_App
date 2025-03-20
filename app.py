@@ -39,7 +39,7 @@ def main():
             st.dataframe(processed_df.head())
 
             # Generate group-level analysis
-            power_counts, accel_counts = matrix_generator.generate_group_analysis(processed_df)
+            power_counts, accel_counts, power_progression, accel_progression = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.subheader("Group Development Analysis")
@@ -51,10 +51,18 @@ def main():
                 styled_power_counts = power_counts.style.format("{:.0f}")
                 st.dataframe(styled_power_counts)
 
+                st.write("Power Progression Analysis")
+                styled_power_prog = power_progression.style.format("{:.0f}")
+                st.dataframe(styled_power_prog)
+
             with col2:
                 st.write("Acceleration Development Distribution")
                 styled_accel_counts = accel_counts.style.format("{:.0f}")
                 st.dataframe(styled_accel_counts)
+
+                st.write("Acceleration Progression Analysis")
+                styled_accel_prog = accel_progression.style.format("{:.0f}")
+                st.dataframe(styled_accel_prog)
 
             # User selection for individual analysis
             st.subheader("Individual User Analysis")
