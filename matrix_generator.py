@@ -41,6 +41,14 @@ class MatrixGenerator:
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
 
+        # First, identify users with multiple tests
+        user_test_counts = {}
+        for user in df['user name'].unique():
+            matrices = self.generate_user_matrices(df, user)
+            if matrices[2] is not None:  # If development matrices exist
+                _, _, _, _, _, power_brackets, _ = matrices
+                user_test_counts[user] = len(power_brackets)
+
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
@@ -49,8 +57,9 @@ class MatrixGenerator:
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
 
-                # Check if user is one-time tester
-                is_one_time = len(power_brackets) == 1
+                # Determine if user is one-time tester
+                test_count = user_test_counts[user]
+                is_one_time = test_count == 1
 
                 # Add test columns if needed
                 test_columns = [f"Test {i}" for i in range(1, max_tests + 1)]
@@ -59,7 +68,7 @@ class MatrixGenerator:
                         power_counts[test] = 0
                         accel_counts[test] = 0
 
-                # Count categories for power
+                # Process power brackets
                 for test, row in power_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
@@ -71,7 +80,7 @@ class MatrixGenerator:
                                 power_counts.loc[category, test] += 1
                                 power_counts.loc['Total Users', test] += 1
 
-                # Count categories for acceleration
+                # Process acceleration brackets
                 for test, row in accel_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
@@ -83,15 +92,18 @@ class MatrixGenerator:
                                 accel_counts.loc[category, test] += 1
                                 accel_counts.loc['Total Users', test] += 1
 
-                # Analyze progression for consecutive tests (only for non-one-time users)
+                # Only analyze progression for users with multiple tests
                 if not is_one_time:
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
                         next_test = test_columns[i+1]
-                        transition_col = f'Test {i+1}-{i+2}'
 
-                        # Power progression
-                        if current_test in power_brackets.index and next_test in power_brackets.index:
+                        # Only process if user has both tests
+                        if (current_test in power_brackets.index and 
+                            next_test in power_brackets.index):
+                            transition_col = f'Test {i+1}-{i+2}'
+
+                            # Power progression
                             current_cat = power_brackets.loc[current_test, 'Category']
                             next_cat = power_brackets.loc[next_test, 'Category']
                             self._update_progression_counts(
@@ -100,8 +112,7 @@ class MatrixGenerator:
                                 power_transitions[transition_col]
                             )
 
-                        # Acceleration progression
-                        if current_test in accel_brackets.index and next_test in accel_brackets.index:
+                            # Acceleration progression
                             current_cat = accel_brackets.loc[current_test, 'Category']
                             next_cat = accel_brackets.loc[next_test, 'Category']
                             self._update_progression_counts(
