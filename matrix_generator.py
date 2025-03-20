@@ -41,6 +41,9 @@ class MatrixGenerator:
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
 
+        # Track users with single test instance
+        single_test_users = {'power': 0, 'acceleration': 0}
+
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
@@ -55,6 +58,12 @@ class MatrixGenerator:
                     if test not in power_counts.columns:
                         power_counts[test] = 0
                         accel_counts[test] = 0
+
+                # Check for single test instance users
+                if len(power_brackets) == 1 and 'Test 1' in power_brackets.index:
+                    single_test_users['power'] += 1
+                if len(accel_brackets) == 1 and 'Test 1' in accel_brackets.index:
+                    single_test_users['acceleration'] += 1
 
                 # Count categories for power (limited to max_tests)
                 for test, row in power_brackets.iterrows():
@@ -105,7 +114,7 @@ class MatrixGenerator:
         accel_patterns = self._analyze_transition_patterns(accel_transitions)
 
         return (power_counts, accel_counts, power_progression, accel_progression, 
-                power_patterns, accel_patterns)
+                power_patterns, accel_patterns, single_test_users)
 
     def _update_progression_counts(self, current_cat, next_cat, progression_df, col, transitions_list):
         """Update progression counts based on category changes."""
