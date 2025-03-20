@@ -8,25 +8,27 @@ class MatrixGenerator:
     def __init__(self):
         self.exercises = ALL_EXERCISES
         self.development_brackets = {
-            'Elite': (90, 100),
-            'Advanced': (76, 89.99),
-            'Intermediate': (51, 75),
-            'Developing': (26, 50),
-            'Underdeveloped': (0, 25)
+            'Goal Hit': (100, float('inf')),
+            'Elite': (90, 99.99),
+            'Above Average': (76, 90),
+            'Average': (51, 75),
+            'Under Developed': (26, 50),
+            'Severely Under Developed': (0, 25)
         }
         # Define bracket order for progression analysis
         self.bracket_order = [
-            'Underdeveloped',
-            'Developing',
-            'Intermediate',
-            'Advanced',
-            'Elite'
+            'Severely Under Developed',
+            'Under Developed',
+            'Average',
+            'Above Average',
+            'Elite',
+            'Goal Hit'
         ]
         # Define colors for transition types
         self.transition_colors = {
-            'level_up': 'green',       # Single bracket improvement
-            'regression': 'red',       # Any regression
-            'jump': 'blue'            # Multiple bracket improvement
+            'level_up': 'rgba(44, 160, 44, 0.6)',  # Green
+            'regression': 'rgba(214, 39, 40, 0.6)', # Red
+            'jump': 'rgba(31, 119, 180, 0.6)'      # Blue
         }
 
     def generate_group_analysis(self, df, max_tests=4):
@@ -189,11 +191,7 @@ class MatrixGenerator:
             )
         )])
 
-        fig.update_layout(
-            title_text=title,
-            font_size=12,
-            height=400
-        )
+        fig.update_layout(title_text=title, font_size=10)
         return fig
 
     def generate_user_matrices(self, df, user_name):
