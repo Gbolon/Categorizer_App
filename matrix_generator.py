@@ -37,6 +37,18 @@ class MatrixGenerator:
             columns=[f'Test {i}-{i+1}' for i in range(1, max_tests)])
         accel_progression = power_progression.copy()
 
+        # Initialize transition tracking
+        power_transitions = {
+            'level_ups': [],
+            'regressors': [],
+            'jumps': []
+        }
+        accel_transitions = {
+            'level_ups': [],
+            'regressors': [],
+            'jumps': []
+        }
+
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
@@ -82,7 +94,8 @@ class MatrixGenerator:
                         next_cat = power_brackets.loc[next_test, 'Category']
                         self._update_progression_counts(
                             current_cat, next_cat, 
-                            power_progression, transition_col
+                            power_progression, transition_col,
+                            power_transitions
                         )
 
                     # Acceleration progression
@@ -91,12 +104,18 @@ class MatrixGenerator:
                         next_cat = accel_brackets.loc[next_test, 'Category']
                         self._update_progression_counts(
                             current_cat, next_cat, 
-                            accel_progression, transition_col
+                            accel_progression, transition_col,
+                            accel_transitions
                         )
 
-        return power_counts, accel_counts, power_progression, accel_progression
+        # Generate transition analysis
+        power_transition_analysis = self._analyze_transitions(power_transitions)
+        accel_transition_analysis = self._analyze_transitions(accel_transitions)
 
-    def _update_progression_counts(self, current_cat, next_cat, progression_df, col):
+        return (power_counts, accel_counts, power_progression, accel_progression, 
+                power_transition_analysis, accel_transition_analysis)
+
+    def _update_progression_counts(self, current_cat, next_cat, progression_df, col, transitions):
         """Update progression counts based on category changes."""
         if current_cat and next_cat and pd.notna(current_cat) and pd.notna(next_cat):
             try:
@@ -104,16 +123,53 @@ class MatrixGenerator:
                 next_idx = self.bracket_order.index(next_cat)
                 change = next_idx - current_idx
 
+                transition = (current_cat, next_cat)
                 if change == 1:  # Exactly one bracket improvement
                     progression_df.loc['Level Ups', col] += 1
+                    transitions['level_ups'].append(transition)
                 elif change > 1:  # Multiple bracket improvement
                     progression_df.loc['Bracket Jumps', col] += 1
+                    transitions['jumps'].append(transition)
                 elif change < 0:  # Any regression
                     progression_df.loc['Regressors', col] += 1
+                    transitions['regressors'].append(transition)
 
             except ValueError:
                 # Skip if category is not in bracket_order
                 pass
+
+    def _analyze_transitions(self, transitions):
+        """Analyze transition patterns and create summary DataFrames."""
+        analysis = {}
+
+        # Analyze each transition type
+        for transition_type in ['level_ups', 'regressors', 'jumps']:
+            if not transitions[transition_type]:
+                continue
+
+            # Count transitions
+            transition_counts = {}
+            for from_bracket, to_bracket in transitions[transition_type]:
+                key = (from_bracket, to_bracket)
+                transition_counts[key] = transition_counts.get(key, 0) + 1
+
+            # Convert to DataFrame
+            rows = []
+            for (from_bracket, to_bracket), count in transition_counts.items():
+                rows.append({
+                    'From Bracket': from_bracket,
+                    'To Bracket': to_bracket,
+                    'Count': count
+                })
+
+            if rows:
+                df = pd.DataFrame(rows)
+                df = df.sort_values('Count', ascending=False)
+                analysis[transition_type] = df
+            else:
+                analysis[transition_type] = None
+
+        return analysis
 
     def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""
