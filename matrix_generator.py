@@ -15,7 +15,7 @@ class MatrixGenerator:
             'Severely Under Developed': (0, 25)
         }
 
-    def generate_group_analysis(self, df):
+    def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys())
@@ -33,23 +33,26 @@ class MatrixGenerator:
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
 
-                # Update columns if needed
-                for test in power_brackets.index:
+                # Update columns if needed (limited to max_tests)
+                test_columns = [f"Test {i}" for i in range(1, max_tests + 1)]
+                for test in test_columns:
                     if test not in power_counts.columns:
                         power_counts[test] = 0
                         accel_counts[test] = 0
 
-                # Count categories for power
+                # Count categories for power (limited to max_tests)
                 for test, row in power_brackets.iterrows():
-                    category = row['Category']
-                    if category in categories:
-                        power_counts.loc[category, test] += 1
+                    if test in test_columns:
+                        category = row['Category']
+                        if category in categories:
+                            power_counts.loc[category, test] += 1
 
-                # Count categories for acceleration
+                # Count categories for acceleration (limited to max_tests)
                 for test, row in accel_brackets.iterrows():
-                    category = row['Category']
-                    if category in categories:
-                        accel_counts.loc[category, test] += 1
+                    if test in test_columns:
+                        category = row['Category']
+                        if category in categories:
+                            accel_counts.loc[category, test] += 1
 
         return power_counts, accel_counts
 
