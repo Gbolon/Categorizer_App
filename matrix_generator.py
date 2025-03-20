@@ -28,8 +28,8 @@ class MatrixGenerator:
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
-        power_counts = pd.DataFrame(0, index=categories, columns=[])
-        accel_counts = pd.DataFrame(0, index=categories, columns=[])
+        power_counts = pd.DataFrame(0, index=categories, columns=['One Time Users'])
+        accel_counts = pd.DataFrame(0, index=categories, columns=['One Time Users'])
 
         # Initialize progression analysis DataFrames
         power_progression = pd.DataFrame(0, 
@@ -49,56 +49,66 @@ class MatrixGenerator:
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
 
-                # Update columns if needed (limited to max_tests)
+                # Check if user is one-time tester
+                is_one_time = len(power_brackets) == 1
+
+                # Add test columns if needed
                 test_columns = [f"Test {i}" for i in range(1, max_tests + 1)]
                 for test in test_columns:
                     if test not in power_counts.columns:
                         power_counts[test] = 0
                         accel_counts[test] = 0
 
-                # Count categories for power (limited to max_tests)
+                # Count categories for power
                 for test, row in power_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
                         if category in self.development_brackets.keys():
-                            power_counts.loc[category, test] += 1
-                            # Increment total users for this test
-                            power_counts.loc['Total Users', test] += 1
+                            if is_one_time:
+                                power_counts.loc[category, 'One Time Users'] += 1
+                                power_counts.loc['Total Users', 'One Time Users'] += 1
+                            else:
+                                power_counts.loc[category, test] += 1
+                                power_counts.loc['Total Users', test] += 1
 
-                # Count categories for acceleration (limited to max_tests)
+                # Count categories for acceleration
                 for test, row in accel_brackets.iterrows():
                     if test in test_columns:
                         category = row['Category']
                         if category in self.development_brackets.keys():
-                            accel_counts.loc[category, test] += 1
-                            # Increment total users for this test
-                            accel_counts.loc['Total Users', test] += 1
+                            if is_one_time:
+                                accel_counts.loc[category, 'One Time Users'] += 1
+                                accel_counts.loc['Total Users', 'One Time Users'] += 1
+                            else:
+                                accel_counts.loc[category, test] += 1
+                                accel_counts.loc['Total Users', test] += 1
 
-                # Analyze progression for consecutive tests
-                for i in range(len(test_columns)-1):
-                    current_test = test_columns[i]
-                    next_test = test_columns[i+1]
-                    transition_col = f'Test {i+1}-{i+2}'
+                # Analyze progression for consecutive tests (only for non-one-time users)
+                if not is_one_time:
+                    for i in range(len(test_columns)-1):
+                        current_test = test_columns[i]
+                        next_test = test_columns[i+1]
+                        transition_col = f'Test {i+1}-{i+2}'
 
-                    # Power progression
-                    if current_test in power_brackets.index and next_test in power_brackets.index:
-                        current_cat = power_brackets.loc[current_test, 'Category']
-                        next_cat = power_brackets.loc[next_test, 'Category']
-                        self._update_progression_counts(
-                            current_cat, next_cat, 
-                            power_progression, transition_col,
-                            power_transitions[transition_col]
-                        )
+                        # Power progression
+                        if current_test in power_brackets.index and next_test in power_brackets.index:
+                            current_cat = power_brackets.loc[current_test, 'Category']
+                            next_cat = power_brackets.loc[next_test, 'Category']
+                            self._update_progression_counts(
+                                current_cat, next_cat, 
+                                power_progression, transition_col,
+                                power_transitions[transition_col]
+                            )
 
-                    # Acceleration progression
-                    if current_test in accel_brackets.index and next_test in accel_brackets.index:
-                        current_cat = accel_brackets.loc[current_test, 'Category']
-                        next_cat = accel_brackets.loc[next_test, 'Category']
-                        self._update_progression_counts(
-                            current_cat, next_cat, 
-                            accel_progression, transition_col,
-                            accel_transitions[transition_col]
-                        )
+                        # Acceleration progression
+                        if current_test in accel_brackets.index and next_test in accel_brackets.index:
+                            current_cat = accel_brackets.loc[current_test, 'Category']
+                            next_cat = accel_brackets.loc[next_test, 'Category']
+                            self._update_progression_counts(
+                                current_cat, next_cat, 
+                                accel_progression, transition_col,
+                                accel_transitions[transition_col]
+                            )
 
         # Analyze level up patterns
         power_patterns = self._analyze_transition_patterns(power_transitions)
