@@ -1,0 +1,154 @@
+1. Data Organization
+
+a) Columns in the Dataset
+
+The dataset consists of the following key columns:
+
+Identifiers: session id, exercise id, user name (Users are uniquely identified by the user name column)
+
+Time-Based Data: session createdAt, exercise createdAt
+
+Exercise Details: Exercises are uniquely identified by the combination of exercise name and dominance.
+
+Performance Metrics: Only the following two columns are used in matrix creation:
+
+Power Data: power - high
+
+Acceleration Data: acceleration - high
+
+User Demographics: user name, birth date, weight, height, sex, sport, position
+
+Each row corresponds to an instance of an exercise performed by a user on a specific date. If a movement is one-handed, it has an associated dominance value (Dominant or Non-Dominant).
+
+b) Data Filtering
+
+Before processing, only rows where the exercise name exactly matches one of the predefined exercises will be included. Any data entries that do not match the exact exercise names listed below will be filtered out prior to matrix creation to remove excess data.
+
+2. Defining Test Instances
+
+Each user is tested for a predefined set of 18 exercise movements. A test instance:
+
+Is not performed all at once but is progressively filled as the user completes movements.
+
+The values in the power - high and acceleration - high columns are already the highest recorded for each movement. Test instance metrics are created directly from these columns for every valid row, ensuring accurate data representation without additional filtering for peak values.
+
+Is structured as a matrix for each user, with exercise movements as rows and test instances as columns.
+
+Automating Test Instance Organization
+
+To develop an app or program that automatically organizes data and fills test instances dynamically, follow these structured steps:
+
+Data Ingestion & Cleaning:
+
+Load the dataset from a .csv or .xlsx file.
+
+Filter rows to include only predefined exercises.
+
+Sort data by user name and exercise createdAt to ensure chronological order.
+
+Test Instance Assignment:
+
+Create a dictionary or database table where each user has a set of test instances.
+
+Loop through each row in the dataset:
+
+If the user has no test instances yet, assign row data to Test Instance 1.
+
+If the movement exists in an earlier test instance, do not overwrite existing data.
+
+If the movement has not yet been recorded in an existing test, place it in the earliest available test instance.
+
+Data Structuring:
+
+Store organized test instances as a nested dictionary or relational database, structured as:
+
+{
+    'User A': {
+        'Test 1': {
+            'Chest Press (Dominant)': {'Power': 210, 'Acceleration': 22},
+            'Biceps Curl (Non-Dominant)': {'Power': 95, 'Acceleration': 9}
+        },
+        'Test 2': {
+            'Chest Press (Dominant)': {'Power': 215, 'Acceleration': 23}
+        }
+    }
+}
+
+Output Generation:
+
+Convert structured data into a pandas DataFrame or export to a database for easy retrieval.
+
+Provide summary reports, charts, and the ability to query test history per user.
+
+User Interface (Optional):
+
+Build a web-based dashboard (Streamlit, Flask, or FastAPI + React) to visualize test instances and progression over time.
+
+Allow users to upload new test data, triggering automatic updates to the database.
+
+This structured approach ensures efficient, scalable, and automated test instance management. Would you like sample code to implement this? 🚀
+Each user is tested for a predefined set of 18 exercise movements. A test instance:
+
+Is not performed all at once but is progressively filled as the user completes movements.
+
+The values in the power - high and acceleration - high columns are already the highest recorded for each movement. Test instance metrics are created directly from these columns for every valid row, ensuring accurate data representation without additional filtering for peak values.
+
+Is structured as a matrix for each user with exercise movements as rows and test instances as columns.
+
+List of Tracked Exercise Movements by Body Region
+
+Torso:
+
+Straight Arm Trunk Rotation (Dominant)
+
+Straight Arm Trunk Rotation (Non-Dominant)
+
+Shot Put (Countermovement) (Dominant only)
+
+Arms:
+
+PNF D2 Flexion (Dominant)
+
+PNF D2 Extension (Dominant)
+
+PNF D2 Flexion (Non-Dominant)
+
+PNF D2 Extension (Non-Dominant)
+
+Biceps Curl (One Hand) (Dominant)
+
+Triceps Extension (One Hand) (Dominant)
+
+Biceps Curl (One Hand) (Non-Dominant)
+
+Triceps Extension (One Hand) (Non-Dominant)
+
+Press/Pull:
+
+Horizontal Row (One Hand) (Dominant)
+
+Horizontal Row (One Hand) (Non-Dominant)
+
+Chest Press (One Hand) (Dominant)
+
+Chest Press (One Hand) (Non-Dominant)
+
+Legs:
+
+Lateral Bound (Dominant)
+
+Lateral Bound (Non-Dominant)
+
+Vertical Jump (Countermovement)
+
+Refining Dynamic Test Instance Filling
+
+A user does not need to perform all exercises on the same day for them to be counted as part of the same test instance. Instead:
+
+Test instances are filled dynamically based on movement completion and are chronologically populated starting from Test 1, regardless of date.
+
+If a user performs a movement multiple times on different days, the test instance is determined by chronological order.
+
+Movements should always be backfilled into the earliest available open test instance to ensure that gaps are minimized in earlier test instances.
+
+A test instance does not need to contain all movements to be valid.
