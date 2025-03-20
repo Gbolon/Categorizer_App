@@ -34,9 +34,9 @@ def main():
             # Process data
             processed_df = data_processor.preprocess_data(df)
 
-            # Show data preview
-            st.subheader("Data Preview")
-            st.dataframe(processed_df.head())
+            # Show data preview in collapsed expander
+            with st.expander("Data Preview", expanded=False):
+                st.dataframe(processed_df.head())
 
             # Generate group-level analysis
             power_counts, accel_counts, power_progression, accel_progression = matrix_generator.generate_group_analysis(processed_df)
