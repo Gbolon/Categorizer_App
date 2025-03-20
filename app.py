@@ -40,25 +40,22 @@ def main():
 
             # Generate group-level analysis
             (power_counts, accel_counts, power_progression, accel_progression,
-             power_patterns, accel_patterns, single_test_users) = matrix_generator.generate_group_analysis(processed_df)
+             power_patterns, accel_patterns, single_test_distribution) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.subheader("Group Development Analysis")
 
-            # Display single test instance info
-            st.write("Users with Single Test Instance:")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Power Development", single_test_users['power'])
-            with col2:
-                st.metric("Acceleration Development", single_test_users['acceleration'])
+            # Display Single Test Users Distribution
+            st.write("Single Test Users Distribution")
+            styled_single_test = single_test_distribution.style.format("{:.0f}")
+            st.dataframe(styled_single_test, use_container_width=True)
 
             # Display distribution tables full width
-            st.write("Power Development Distribution")
+            st.write("Multi-Test Users Power Development Distribution")
             styled_power_counts = power_counts.style.format("{:.0f}")
             st.dataframe(styled_power_counts, use_container_width=True)
 
-            st.write("Acceleration Development Distribution")
+            st.write("Multi-Test Users Acceleration Development Distribution")
             styled_accel_counts = accel_counts.style.format("{:.0f}")
             st.dataframe(styled_accel_counts, use_container_width=True)
 
@@ -158,7 +155,8 @@ def main():
                     (power_counts, "power_group_analysis"),
                     (accel_counts, "acceleration_group_analysis"),
                     (power_patterns, "power_patterns"),
-                    (accel_patterns, "accel_patterns")
+                    (accel_patterns, "accel_patterns"),
+                    (single_test_distribution, "single_test_distribution")
                 ]:
                     if matrix is not None:
                         st.download_button(
