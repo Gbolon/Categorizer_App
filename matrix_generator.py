@@ -37,6 +37,10 @@ class MatrixGenerator:
             columns=[f'Test {i}-{i+1}' for i in range(1, max_tests)])
         accel_progression = power_progression.copy()
 
+        # Initialize transition tracking for level ups
+        power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
+        accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
+
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
@@ -82,7 +86,8 @@ class MatrixGenerator:
                         next_cat = power_brackets.loc[next_test, 'Category']
                         self._update_progression_counts(
                             current_cat, next_cat, 
-                            power_progression, transition_col
+                            power_progression, transition_col,
+                            power_transitions[transition_col]
                         )
 
                     # Acceleration progression
@@ -91,12 +96,18 @@ class MatrixGenerator:
                         next_cat = accel_brackets.loc[next_test, 'Category']
                         self._update_progression_counts(
                             current_cat, next_cat, 
-                            accel_progression, transition_col
+                            accel_progression, transition_col,
+                            accel_transitions[transition_col]
                         )
 
-        return power_counts, accel_counts, power_progression, accel_progression
+        # Analyze level up patterns
+        power_patterns = self._analyze_transition_patterns(power_transitions)
+        accel_patterns = self._analyze_transition_patterns(accel_transitions)
 
-    def _update_progression_counts(self, current_cat, next_cat, progression_df, col):
+        return (power_counts, accel_counts, power_progression, accel_progression, 
+                power_patterns, accel_patterns)
+
+    def _update_progression_counts(self, current_cat, next_cat, progression_df, col, transitions_list):
         """Update progression counts based on category changes."""
         if current_cat and next_cat and pd.notna(current_cat) and pd.notna(next_cat):
             try:
@@ -106,6 +117,7 @@ class MatrixGenerator:
 
                 if change == 1:  # Exactly one bracket improvement
                     progression_df.loc['Level Ups', col] += 1
+                    transitions_list.append((current_cat, next_cat))
                 elif change > 1:  # Multiple bracket improvement
                     progression_df.loc['Bracket Jumps', col] += 1
                 elif change < 0:  # Any regression
@@ -114,6 +126,33 @@ class MatrixGenerator:
             except ValueError:
                 # Skip if category is not in bracket_order
                 pass
+
+    def _analyze_transition_patterns(self, transitions_dict):
+        """Analyze common transition patterns for level ups."""
+        patterns_df = pd.DataFrame(columns=['Most Common From', 'Most Common To', 'Count'])
+
+        for period, transitions in transitions_dict.items():
+            if transitions:
+                # Count frequency of each transition pattern
+                transition_counts = {}
+                for from_bracket, to_bracket in transitions:
+                    key = (from_bracket, to_bracket)
+                    transition_counts[key] = transition_counts.get(key, 0) + 1
+
+                # Find most common transition
+                if transition_counts:
+                    most_common = max(transition_counts.items(), key=lambda x: x[1])
+                    patterns_df.loc[period] = [
+                        most_common[0][0],  # From bracket
+                        most_common[0][1],  # To bracket
+                        most_common[1]      # Count
+                    ]
+                else:
+                    patterns_df.loc[period] = ['No level ups', 'No level ups', 0]
+            else:
+                patterns_df.loc[period] = ['No level ups', 'No level ups', 0]
+
+        return patterns_df
 
     def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""

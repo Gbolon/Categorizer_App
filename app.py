@@ -39,7 +39,8 @@ def main():
                 st.dataframe(processed_df.head())
 
             # Generate group-level analysis
-            power_counts, accel_counts, power_progression, accel_progression = matrix_generator.generate_group_analysis(processed_df)
+            (power_counts, accel_counts, power_progression, accel_progression,
+             power_patterns, accel_patterns) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.subheader("Group Development Analysis")
@@ -55,6 +56,12 @@ def main():
                 styled_power_prog = power_progression.style.format("{:.0f}")
                 st.dataframe(styled_power_prog)
 
+                st.write("Power Level-Up Patterns")
+                styled_power_patterns = power_patterns.style.format({
+                    'Count': '{:.0f}'
+                })
+                st.dataframe(styled_power_patterns)
+
             with col2:
                 st.write("Acceleration Development Distribution")
                 styled_accel_counts = accel_counts.style.format("{:.0f}")
@@ -63,6 +70,12 @@ def main():
                 st.write("Acceleration Progression Analysis")
                 styled_accel_prog = accel_progression.style.format("{:.0f}")
                 st.dataframe(styled_accel_prog)
+
+                st.write("Acceleration Level-Up Patterns")
+                styled_accel_patterns = accel_patterns.style.format({
+                    'Count': '{:.0f}'
+                })
+                st.dataframe(styled_accel_patterns)
 
             # User selection for individual analysis
             st.subheader("Individual User Analysis")
@@ -132,7 +145,9 @@ def main():
                     (power_brackets, "power_brackets"),
                     (accel_brackets, "acceleration_brackets"),
                     (power_counts, "power_group_analysis"),
-                    (accel_counts, "acceleration_group_analysis")
+                    (accel_counts, "acceleration_group_analysis"),
+                    (power_patterns, "power_patterns"),
+                    (accel_patterns, "accel_patterns")
                 ]:
                     if matrix is not None:
                         st.download_button(
