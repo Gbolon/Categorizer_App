@@ -10,14 +10,14 @@ def style_transition_matrix(matrix):
     def color_cells(val, i, j):
         if i == j:
             return 'background-color: #e6e6ff'  # pale blue for diagonal
-        elif i < j:
+        elif matrix.index.get_loc(i) < matrix.index.get_loc(j):
             return 'background-color: #ffe6e6'  # pale red for above diagonal (regression)
         else:
             return 'background-color: #e6ffe6'  # pale green for below diagonal (improvement)
 
     return matrix.style.format("{:.0f}").apply(lambda x: [color_cells(v, x.name, j) 
-                                                          for j, v in enumerate(x)], 
-                                               axis=1)
+                                                           for j, v in enumerate(x.index)], 
+                                                axis=1)
 
 def main():
     st.title("Exercise Test Instance Matrix Generator")
