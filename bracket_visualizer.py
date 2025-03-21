@@ -29,14 +29,14 @@ class BracketVisualizer:
 
         # Get all periods from transitions dict
         periods = list(transitions_dict.keys())
-
+        
         # For each bracket, create a trace showing its population over time
         for bracket in self.bracket_order:
             y_values = []
-
+            
             # Calculate total users in this bracket for each period
             for period in periods:
-                matrix = transitions_dict[period].data  # Access the underlying DataFrame
+                matrix = transitions_dict[period]
                 # Sum both users staying in bracket and those moving to it
                 total_in_bracket = matrix[bracket].sum()
                 y_values.append(total_in_bracket)
@@ -97,26 +97,23 @@ class BracketVisualizer:
 
     def create_flow_diagram(self, transition_matrix, period):
         """Create a Sankey diagram showing flows between brackets."""
-        # Get the underlying DataFrame from the Styler object
-        matrix_data = transition_matrix.data
-
         # Prepare source, target, and value lists for Sankey diagram
         source = []
         target = []
         value = []
-
+        
         # Create node labels with counts
         node_labels = self.bracket_order.copy()
-
+        
         # Calculate flows
         for i, from_bracket in enumerate(self.bracket_order):
             for j, to_bracket in enumerate(self.bracket_order):
-                flow = matrix_data.loc[from_bracket, to_bracket]
+                flow = transition_matrix.loc[from_bracket, to_bracket]
                 if flow > 0:
                     source.append(i)
                     target.append(j)
                     value.append(flow)
-
+        
         # Create Sankey diagram
         fig = go.Figure(data=[go.Sankey(
             node=dict(
@@ -132,10 +129,10 @@ class BracketVisualizer:
                 value=value
             )
         )])
-
+        
         fig.update_layout(
             title_text=f"Bracket Transitions for {period}",
             font_size=12
         )
-
+        
         return fig
