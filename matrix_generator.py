@@ -164,23 +164,43 @@ class MatrixGenerator:
 
     def _analyze_detailed_transitions(self, transitions_dict):
         """
-        Create a detailed transition matrix showing all movements between brackets.
-        This includes both improvements and regressions.
+        Create a transition matrix where:
+        - Diagonal cells (no change) are Pale Blue
+        - Above the diagonal (regression) is Pale Red
+        - Below the diagonal (improvement) is Pale Green
         """
         transition_matrices = {}
 
         for period, transitions in transitions_dict.items():
-            # Create a transition matrix for each period
+            # Create an empty transition matrix
             matrix = pd.DataFrame(0, 
                 index=self.bracket_order,
                 columns=self.bracket_order)
 
-            # Count all transitions
+            # Count transitions from each bracket to another
             for from_bracket, to_bracket in transitions:
                 if from_bracket in self.bracket_order and to_bracket in self.bracket_order:
                     matrix.loc[from_bracket, to_bracket] += 1
 
-            transition_matrices[period] = matrix
+            # Function to apply background color based on cell position
+            def highlight_cells(dataframe):
+                styles = pd.DataFrame("", index=dataframe.index, columns=dataframe.columns)
+
+                for i in range(len(dataframe)):  # Row index
+                    for j in range(len(dataframe.columns)):  # Column index
+                        if i == j:  # Diagonal (No movement)
+                            styles.iloc[i, j] = "background-color: lightblue;"
+                        elif i < j:  # Above diagonal (Regression)
+                            styles.iloc[i, j] = "background-color: lightcoral;"  # Pale Red
+                        else:  # Below diagonal (Improvement)
+                            styles.iloc[i, j] = "background-color: lightgreen;"  # Pale Green
+
+                return styles
+
+            # Apply static color formatting and number formatting to the DataFrame
+            styled_matrix = matrix.style.format("{:.0f}").apply(highlight_cells, axis=None)
+
+            transition_matrices[period] = styled_matrix
 
         return transition_matrices
 
