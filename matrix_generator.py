@@ -228,11 +228,11 @@ class MatrixGenerator:
 
             # Create MultiIndex for columns with "Ending Bracket" header
             matrix.columns = pd.MultiIndex.from_tuples([
-                ("Ending Bracket", col) if col != "Starting Bracket" else ("", col)
+                ("Ending Bracket", col) if col != "Starting Bracket" else ("Starting →", col)
                 for col in matrix.columns
             ])
 
-            # Function to apply background color based on cell position
+            # Function to apply background color and text rotation
             def highlight_cells(dataframe):
                 styles = pd.DataFrame("", index=dataframe.index, columns=dataframe.columns)
 
@@ -250,8 +250,16 @@ class MatrixGenerator:
                         else:  # Below diagonal (Improvement)
                             styles.loc[dataframe.index[i], col] = base_style + "background-color: lightgreen;"
 
-                # Style for Starting Bracket column
-                styles[("", "Starting Bracket")] = base_style
+                # Style for Starting Bracket column with rotated text
+                styles[("Starting →", "Starting Bracket")] = (
+                    "color: black; font-weight: bold; "
+                    "text-align: left; "
+                    "writing-mode: vertical-rl; "
+                    "transform: rotate(180deg); "
+                    "white-space: nowrap; "
+                    "vertical-align: middle; "
+                    "padding: 10px 0px;"
+                )
 
                 return styles
 
