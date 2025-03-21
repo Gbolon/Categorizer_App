@@ -188,12 +188,13 @@ class MatrixGenerator:
 
                 for i in range(len(dataframe)):  # Row index
                     for j in range(len(dataframe.columns)):  # Column index
+                        base_style = "color: black; font-weight: bold; "
                         if i == j:  # Diagonal (No movement)
-                            styles.iloc[i, j] = "background-color: lightblue;"
+                            styles.iloc[i, j] = base_style + "background-color: lightblue;"
                         elif i < j:  # Above diagonal (Regression)
-                            styles.iloc[i, j] = "background-color: lightcoral;"  # Pale Red
+                            styles.iloc[i, j] = base_style + "background-color: lightcoral;"  # Pale Red
                         else:  # Below diagonal (Improvement)
-                            styles.iloc[i, j] = "background-color: lightgreen;"  # Pale Green
+                            styles.iloc[i, j] = base_style + "background-color: lightgreen;"  # Pale Green
 
                 return styles
 
