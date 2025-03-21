@@ -63,22 +63,29 @@ def main():
             # Display detailed transition analysis
             st.subheader("Detailed Transition Analysis")
 
+            def style_transition_matrix(df):
+                """Style the transition matrix with bold diagonal values."""
+                return df.style.format("{:.0f}").apply(lambda x: ['font-weight: bold' if i == x.name else '' 
+                                                                 for i in range(len(x))], axis=1)
+
             # Power transitions
             st.write("Power Development Transitions")
             for period, matrix in power_transitions_detail.items():
                 st.write(f"Period: {period}")
-                styled_matrix = matrix.style.format("{:.0f}")
+                styled_matrix = style_transition_matrix(matrix)
                 st.dataframe(styled_matrix, use_container_width=True)
                 st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
+                st.write("Diagonal values (bold) show users who remained in the same bracket.")
                 st.write("---")
 
             # Acceleration transitions
             st.write("Acceleration Development Transitions")
             for period, matrix in accel_transitions_detail.items():
                 st.write(f"Period: {period}")
-                styled_matrix = matrix.style.format("{:.0f}")
+                styled_matrix = style_transition_matrix(matrix)
                 st.dataframe(styled_matrix, use_container_width=True)
                 st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
+                st.write("Diagonal values (bold) show users who remained in the same bracket.")
                 st.write("---")
 
             # Display progression analysis in columns
