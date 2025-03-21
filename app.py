@@ -5,6 +5,14 @@ from matrix_generator import MatrixGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
+# Configure the page at the very beginning
+st.set_page_config(
+    page_title="Exercise Test Instance Matrix Generator",
+    page_icon="📊",
+    layout="wide",  # This will make the page wider
+    initial_sidebar_state="auto"
+)
+
 def main():
     st.title("Exercise Test Instance Matrix Generator")
 
