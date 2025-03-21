@@ -56,7 +56,7 @@ def main():
             # Display Single Test Users Distribution
             st.write("Single Test Users Distribution")
             styled_single_test = single_test_distribution.style.format("{:.0f}")
-            st.dataframe(styled_single_test, use_container_width=True)
+            st.dataframe(styled_single_test)  # Removed use_container_width=True
 
             # Display distribution tables full width
             st.write("Multi-Test Users Power Development Distribution")
