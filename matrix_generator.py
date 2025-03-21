@@ -223,24 +223,41 @@ class MatrixGenerator:
                 if from_bracket in self.bracket_order and to_bracket in self.bracket_order:
                     matrix.loc[from_bracket, to_bracket] += 1
 
+            # Add "Starting Bracket" column
+            matrix.insert(0, "Starting Bracket", matrix.index)
+
+            # Create MultiIndex for columns with "Ending Bracket" header
+            matrix.columns = pd.MultiIndex.from_tuples([
+                ("Ending Bracket", col) if col != "Starting Bracket" else ("", col)
+                for col in matrix.columns
+            ])
+
             # Function to apply background color based on cell position
             def highlight_cells(dataframe):
                 styles = pd.DataFrame("", index=dataframe.index, columns=dataframe.columns)
 
+                # Skip the "Starting Bracket" column when applying colors
+                data_cols = [col for col in dataframe.columns if col[1] != "Starting Bracket"]
+
                 for i in range(len(dataframe)):  # Row index
-                    for j in range(len(dataframe.columns)):  # Column index
+                    for col in data_cols:  # Column index
+                        j = self.bracket_order.index(col[1])  # Get position in bracket_order
                         base_style = "color: black; font-weight: bold; "
                         if i == j:  # Diagonal (No movement)
-                            styles.iloc[i, j] = base_style + "background-color: lightblue;"
+                            styles.loc[dataframe.index[i], col] = base_style + "background-color: lightblue;"
                         elif i < j:  # Above diagonal (Regression)
-                            styles.iloc[i, j] = base_style + "background-color: lightcoral;"  # Pale Red
+                            styles.loc[dataframe.index[i], col] = base_style + "background-color: lightcoral;"
                         else:  # Below diagonal (Improvement)
-                            styles.iloc[i, j] = base_style + "background-color: lightgreen;"  # Pale Green
+                            styles.loc[dataframe.index[i], col] = base_style + "background-color: lightgreen;"
+
+                # Style for Starting Bracket column
+                styles[("", "Starting Bracket")] = base_style
 
                 return styles
 
-            # Apply static color formatting and number formatting to the DataFrame
-            styled_matrix = matrix.style.format("{:.0f}").apply(highlight_cells, axis=None)
+            # Apply formatting and styling
+            styled_matrix = matrix.style.format(lambda x: f"{x:.0f}" if isinstance(x, (int, float)) else x)
+            styled_matrix = styled_matrix.apply(highlight_cells, axis=None)
 
             transition_matrices[period] = styled_matrix
 
