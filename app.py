@@ -4,6 +4,7 @@ from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
+from bracket_visualizer import BracketVisualizer
 
 def main():
     st.title("Exercise Test Instance Matrix Generator")
@@ -84,6 +85,39 @@ def main():
                 st.write("Above diagonal (red) shows regression to lower brackets.")
                 st.write("Below diagonal (green) shows improvement to higher brackets.")
                 st.write("---")
+
+            # Add bracket visualizer
+            st.subheader("Bracket Movement Visualization")
+
+            # Initialize visualizer
+            visualizer = BracketVisualizer()
+
+            # Create and display animated transitions
+            st.write("Power Development Transitions Over Time")
+            power_fig = visualizer.create_animated_transitions(
+                power_transitions_detail, "Power")
+            st.plotly_chart(power_fig, use_container_width=True)
+
+            st.write("Acceleration Development Transitions Over Time")
+            accel_fig = visualizer.create_animated_transitions(
+                accel_transitions_detail, "Acceleration")
+            st.plotly_chart(accel_fig, use_container_width=True)
+
+            # Add Sankey diagrams for each period
+            st.subheader("Detailed Flow Analysis")
+
+            tab1, tab2 = st.tabs(["Power Flows", "Acceleration Flows"])
+
+            with tab1:
+                for period, matrix in power_transitions_detail.items():
+                    flow_fig = visualizer.create_flow_diagram(matrix, period)
+                    st.plotly_chart(flow_fig, use_container_width=True)
+
+            with tab2:
+                for period, matrix in accel_transitions_detail.items():
+                    flow_fig = visualizer.create_flow_diagram(matrix, period)
+                    st.plotly_chart(flow_fig, use_container_width=True)
+
 
             # Display progression analysis in columns
             st.subheader("Progression Analysis")
