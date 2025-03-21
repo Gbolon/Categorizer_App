@@ -53,10 +53,25 @@ def main():
             # Display group-level analysis
             st.subheader("Group Development Analysis")
 
-            # Display Single Test Users Distribution
-            st.write("Single Test Users Distribution")
-            styled_single_test = single_test_distribution.style.format("{:.0f}")
-            st.dataframe(styled_single_test)  # Removed use_container_width=True
+            # Create two columns for side-by-side layout
+            col1, col2 = st.columns(2)
+
+            # Display Single Test Users Distribution in left column
+            with col1:
+                st.write("Single Test Users Distribution")
+                styled_single_test = single_test_distribution.style.format("{:.0f}")
+                st.dataframe(styled_single_test)
+
+            # Display average metrics in right column
+            with col2:
+                st.write("Single Test Users Averages")
+                # Calculate averages excluding 'Total Users' row
+                power_avg = single_test_distribution.loc[:'Severely Under Developed', 'Power'].sum() / single_test_distribution.loc['Total Users', 'Power'] * 100 if single_test_distribution.loc['Total Users', 'Power'] > 0 else 0
+                accel_avg = single_test_distribution.loc[:'Severely Under Developed', 'Acceleration'].sum() / single_test_distribution.loc['Total Users', 'Acceleration'] * 100 if single_test_distribution.loc['Total Users', 'Acceleration'] > 0 else 0
+
+                # Create metrics
+                st.metric("Average Overall Power Development", f"{power_avg:.1f}%")
+                st.metric("Average Overall Acceleration Development", f"{accel_avg:.1f}%")
 
             # Display distribution tables full width
             st.write("Multi-Test Users Power Development Distribution")
