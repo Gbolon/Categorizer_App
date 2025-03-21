@@ -7,14 +7,14 @@ from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
 # Configure the page at the very beginning
 st.set_page_config(
-    page_title="Exercise Test Instance Matrix Generator",
+    page_title="Site Development Bracketer",
     page_icon="📊",
     layout="wide",  # This will make the page wider
     initial_sidebar_state="auto"
 )
 
 def main():
-    st.title("Exercise Test Instance Matrix Generator")
+    st.title("Site Development Bracketer")
 
     # Initialize processors
     data_processor = DataProcessor()
