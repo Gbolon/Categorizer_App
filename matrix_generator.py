@@ -112,20 +112,32 @@ class MatrixGenerator:
 
                     # Store test scores for calculating averages
                     if 'Test 1' in overall_dev.columns and 'Test 2' in overall_dev.columns:
-                        power_change_1_2 = overall_dev.loc['Power Average', 'Test 2'] - overall_dev.loc['Power Average', 'Test 1']
-                        accel_change_1_2 = overall_dev.loc['Acceleration Average', 'Test 2'] - overall_dev.loc['Acceleration Average', 'Test 1']
+                        power_1 = overall_dev.loc['Power Average', 'Test 1']
+                        power_2 = overall_dev.loc['Power Average', 'Test 2']
+                        accel_1 = overall_dev.loc['Acceleration Average', 'Test 1']
+                        accel_2 = overall_dev.loc['Acceleration Average', 'Test 2']
 
-                        # Append changes to lists for averaging
-                        test1_to_2_power.append(power_change_1_2)
-                        test1_to_2_accel.append(accel_change_1_2)
+                        if pd.notna(power_1) and pd.notna(power_2):
+                            power_change_1_2 = power_2 - power_1
+                            test1_to_2_power.append(power_change_1_2)
+
+                        if pd.notna(accel_1) and pd.notna(accel_2):
+                            accel_change_1_2 = accel_2 - accel_1
+                            test1_to_2_accel.append(accel_change_1_2)
 
                     if 'Test 2' in overall_dev.columns and 'Test 3' in overall_dev.columns:
-                        power_change_2_3 = overall_dev.loc['Power Average', 'Test 3'] - overall_dev.loc['Power Average', 'Test 2']
-                        accel_change_2_3 = overall_dev.loc['Acceleration Average', 'Test 3'] - overall_dev.loc['Acceleration Average', 'Test 2']
+                        power_2 = overall_dev.loc['Power Average', 'Test 2']
+                        power_3 = overall_dev.loc['Power Average', 'Test 3']
+                        accel_2 = overall_dev.loc['Acceleration Average', 'Test 2']
+                        accel_3 = overall_dev.loc['Acceleration Average', 'Test 3']
 
-                        # Append changes to lists for averaging
-                        test2_to_3_power.append(power_change_2_3)
-                        test2_to_3_accel.append(accel_change_2_3)
+                        if pd.notna(power_2) and pd.notna(power_3):
+                            power_change_2_3 = power_3 - power_2
+                            test2_to_3_power.append(power_change_2_3)
+
+                        if pd.notna(accel_2) and pd.notna(accel_3):
+                            accel_change_2_3 = accel_3 - accel_2
+                            test2_to_3_accel.append(accel_change_2_3)
 
                     # Increment total users once for all test columns
                     for test in test_columns:
