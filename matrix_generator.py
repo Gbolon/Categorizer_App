@@ -40,9 +40,16 @@ class MatrixGenerator:
         single_test_power_scores = []
         single_test_accel_scores = []
 
+        # Track multi-test user changes
+        test1_to_2_power = []
+        test1_to_2_accel = []
+        test2_to_3_power = []
+        test2_to_3_accel = []
+
         # Initialize transition tracking for all movements
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
+
 
         # Process each user
         for user in df['user name'].unique():
@@ -90,7 +97,7 @@ class MatrixGenerator:
                             single_test_distribution.loc['Total Users', 'Acceleration'] += 1
 
                 else:
-                    # Process multi-test users (rest of the existing code)
+                    # Process multi-test users
                     for test, row in power_brackets.iterrows():
                         if test in test_columns:
                             category = row['Category']
@@ -102,6 +109,23 @@ class MatrixGenerator:
                             category = row['Category']
                             if category in self.development_brackets:
                                 accel_counts.loc[category, test] += 1
+
+                    # Store test scores for calculating averages
+                    if 'Test 1' in overall_dev.columns and 'Test 2' in overall_dev.columns:
+                        power_change_1_2 = overall_dev.loc['Power Average', 'Test 2'] - overall_dev.loc['Power Average', 'Test 1']
+                        accel_change_1_2 = overall_dev.loc['Acceleration Average', 'Test 2'] - overall_dev.loc['Acceleration Average', 'Test 1']
+
+                        # Append changes to lists for averaging
+                        test1_to_2_power.append(power_change_1_2)
+                        test1_to_2_accel.append(accel_change_1_2)
+
+                    if 'Test 2' in overall_dev.columns and 'Test 3' in overall_dev.columns:
+                        power_change_2_3 = overall_dev.loc['Power Average', 'Test 3'] - overall_dev.loc['Power Average', 'Test 2']
+                        accel_change_2_3 = overall_dev.loc['Acceleration Average', 'Test 3'] - overall_dev.loc['Acceleration Average', 'Test 2']
+
+                        # Append changes to lists for averaging
+                        test2_to_3_power.append(power_change_2_3)
+                        test2_to_3_accel.append(accel_change_2_3)
 
                     # Increment total users once for all test columns
                     for test in test_columns:
@@ -144,9 +168,17 @@ class MatrixGenerator:
         power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
         accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
 
+        # Calculate average changes
+        avg_power_change_1_2 = np.mean(test1_to_2_power) if test1_to_2_power else 0
+        avg_accel_change_1_2 = np.mean(test1_to_2_accel) if test1_to_2_accel else 0
+        avg_power_change_2_3 = np.mean(test2_to_3_power) if test2_to_3_power else 0
+        avg_accel_change_2_3 = np.mean(test2_to_3_accel) if test2_to_3_accel else 0
+
         return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail,
-                power_average, accel_average)
+                power_average, accel_average,
+                avg_power_change_1_2, avg_accel_change_1_2,
+                avg_power_change_2_3, avg_accel_change_2_3)
 
     def _update_progression_counts(self, current_cat, next_cat, col, transitions_list):
         """Update progression counts based on category changes."""

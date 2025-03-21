@@ -49,7 +49,9 @@ def main():
             # Generate group-level analysis
             (power_counts, accel_counts, single_test_distribution,
              power_transitions_detail, accel_transitions_detail,
-             power_average, accel_average) = matrix_generator.generate_group_analysis(processed_df)
+             power_average, accel_average,
+             avg_power_change_1_2, avg_accel_change_1_2,
+             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.subheader("Group Development Analysis")
@@ -66,10 +68,23 @@ def main():
             # Display average metrics in right column
             with col2:
                 st.write("Single Test Users Averages")
-
-                # Display the actual calculated averages
                 st.metric("Average Overall Power Development", f"{power_average:.1f}%")
                 st.metric("Average Overall Acceleration Development", f"{accel_average:.1f}%")
+
+                st.write("Multi-Test Users Changes")
+                col2_1, col2_2 = st.columns(2)
+
+                with col2_1:
+                    st.metric("Avg Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
+                             delta_color="normal")
+                    st.metric("Avg Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
+                             delta_color="normal")
+
+                with col2_2:
+                    st.metric("Avg Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
+                             delta_color="normal")
+                    st.metric("Avg Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
+                             delta_color="normal")
 
 
             # Display distribution tables full width
