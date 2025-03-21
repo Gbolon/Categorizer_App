@@ -67,7 +67,7 @@ def main():
             st.write("Power Development Transitions")
             for period, matrix in power_transitions_detail.items():
                 st.write(f"Period: {period}")
-                styled_matrix = matrix.style.format("{:.0f}").background_gradient(cmap='RdYlGn', axis=None)
+                styled_matrix = matrix.style.format("{:.0f}")
                 st.dataframe(styled_matrix, use_container_width=True)
                 st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
                 st.write("---")
@@ -76,7 +76,7 @@ def main():
             st.write("Acceleration Development Transitions")
             for period, matrix in accel_transitions_detail.items():
                 st.write(f"Period: {period}")
-                styled_matrix = matrix.style.format("{:.0f}").background_gradient(cmap='RdYlGn', axis=None)
+                styled_matrix = matrix.style.format("{:.0f}")
                 st.dataframe(styled_matrix, use_container_width=True)
                 st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
                 st.write("---")
