@@ -36,6 +36,10 @@ class MatrixGenerator:
             index=list(self.development_brackets.keys()) + ['Total Users'],
             columns=['Power', 'Acceleration'])
 
+        # Track single test user averages
+        single_test_power_scores = []
+        single_test_accel_scores = []
+
         # Initialize transition tracking for all movements
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
@@ -61,6 +65,16 @@ class MatrixGenerator:
                 if not has_multiple_tests:
                     # Process single test users
                     if 'Test 1' in power_brackets.index and 'Test 1' in accel_brackets.index:
+                        # Get overall scores from overall_dev matrix
+                        power_score = overall_dev.loc['Power Average', 'Test 1']
+                        accel_score = overall_dev.loc['Acceleration Average', 'Test 1']
+
+                        # Add to single test score lists
+                        if pd.notna(power_score):
+                            single_test_power_scores.append(power_score)
+                        if pd.notna(accel_score):
+                            single_test_accel_scores.append(accel_score)
+
                         # Get categories for both power and acceleration
                         power_category = power_brackets.loc['Test 1', 'Category']
                         accel_category = accel_brackets.loc['Test 1', 'Category']
@@ -74,8 +88,9 @@ class MatrixGenerator:
                             # Increment total users (same for both columns)
                             single_test_distribution.loc['Total Users', 'Power'] += 1
                             single_test_distribution.loc['Total Users', 'Acceleration'] += 1
+
                 else:
-                    # Process multi-test users
+                    # Process multi-test users (rest of the existing code)
                     for test, row in power_brackets.iterrows():
                         if test in test_columns:
                             category = row['Category']
@@ -106,7 +121,7 @@ class MatrixGenerator:
                             current_cat = power_brackets.loc[current_test, 'Category']
                             next_cat = power_brackets.loc[next_test, 'Category']
                             self._update_progression_counts(
-                                current_cat, next_cat, 
+                                current_cat, next_cat,
                                 transition_col,
                                 power_transitions[transition_col]
                             )
@@ -116,17 +131,22 @@ class MatrixGenerator:
                             current_cat = accel_brackets.loc[current_test, 'Category']
                             next_cat = accel_brackets.loc[next_test, 'Category']
                             self._update_progression_counts(
-                                current_cat, next_cat, 
+                                current_cat, next_cat,
                                 transition_col,
                                 accel_transitions[transition_col]
                             )
+
+        # Calculate actual averages for single test users
+        power_average = np.mean(single_test_power_scores) if single_test_power_scores else 0
+        accel_average = np.mean(single_test_accel_scores) if single_test_accel_scores else 0
 
         # Generate detailed transition matrices
         power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
         accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
 
         return (power_counts, accel_counts, single_test_distribution,
-                power_transitions_detail, accel_transitions_detail)
+                power_transitions_detail, accel_transitions_detail,
+                power_average, accel_average)
 
     def _update_progression_counts(self, current_cat, next_cat, col, transitions_list):
         """Update progression counts based on category changes."""
