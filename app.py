@@ -5,20 +5,6 @@ from matrix_generator import MatrixGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
-def style_transition_matrix(matrix):
-    """Apply color coding to transition matrix."""
-    def color_cells(val, i, j):
-        if i == j:
-            return 'background-color: #e6e6ff'  # pale blue for diagonal
-        elif matrix.index.get_loc(i) < matrix.index.get_loc(j):
-            return 'background-color: #ffe6e6'  # pale red for above diagonal (regression)
-        else:
-            return 'background-color: #e6ffe6'  # pale green for below diagonal (improvement)
-
-    return matrix.style.format("{:.0f}").apply(lambda x: [color_cells(v, x.name, j) 
-                                                           for j, v in enumerate(x.index)], 
-                                                axis=1)
-
 def main():
     st.title("Exercise Test Instance Matrix Generator")
 
@@ -81,28 +67,18 @@ def main():
             st.write("Power Development Transitions")
             for period, matrix in power_transitions_detail.items():
                 st.write(f"Period: {period}")
-                styled_matrix = style_transition_matrix(matrix)
+                styled_matrix = matrix.style.format("{:.0f}").background_gradient(cmap='RdYlGn', axis=None)
                 st.dataframe(styled_matrix, use_container_width=True)
-                st.write("Reading guide: Rows show starting bracket, columns show ending bracket.")
-                st.write("For example: A value of 5 in row 'Elite' column 'Above Average' means 5 users moved from Elite to Above Average.")
-                st.write("Color guide:")
-                st.write("- Pale blue: No change in bracket")
-                st.write("- Pale red: Regression to lower bracket")
-                st.write("- Pale green: Improvement to higher bracket")
+                st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
                 st.write("---")
 
             # Acceleration transitions
             st.write("Acceleration Development Transitions")
             for period, matrix in accel_transitions_detail.items():
                 st.write(f"Period: {period}")
-                styled_matrix = style_transition_matrix(matrix)
+                styled_matrix = matrix.style.format("{:.0f}").background_gradient(cmap='RdYlGn', axis=None)
                 st.dataframe(styled_matrix, use_container_width=True)
-                st.write("Reading guide: Rows show starting bracket, columns show ending bracket.")
-                st.write("For example: A value of 5 in row 'Elite' column 'Above Average' means 5 users moved from Elite to Above Average.")
-                st.write("Color guide:")
-                st.write("- Pale blue: No change in bracket")
-                st.write("- Pale red: Regression to lower bracket")
-                st.write("- Pale green: Improvement to higher bracket")
+                st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
                 st.write("---")
 
             # Display progression analysis in columns
