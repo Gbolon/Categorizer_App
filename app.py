@@ -48,7 +48,8 @@ def main():
 
             # Generate group-level analysis
             (power_counts, accel_counts, single_test_distribution,
-             power_transitions_detail, accel_transitions_detail) = matrix_generator.generate_group_analysis(processed_df)
+             power_transitions_detail, accel_transitions_detail,
+             power_average, accel_average) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.subheader("Group Development Analysis")
