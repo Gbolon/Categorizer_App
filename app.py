@@ -62,6 +62,12 @@ def main():
             # Display detailed transition analysis
             st.subheader("Detailed Transition Analysis")
 
+            # Display reading guide once at the top
+            st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
+            st.write("Diagonal values (blue) show users who remained in the same bracket.")
+            st.write("Above diagonal (red) shows regression to lower brackets.")
+            st.write("Below diagonal (green) shows improvement to higher brackets.")
+
             # Create tabs for Power and Acceleration transitions
             power_tab, accel_tab = st.tabs(["Power Transitions", "Acceleration Transitions"])
 
@@ -70,10 +76,6 @@ def main():
                 for period, matrix in power_transitions_detail.items():
                     st.write(f"Period: {period}")
                     st.dataframe(matrix, use_container_width=True)
-                    st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
-                    st.write("Diagonal values (blue) show users who remained in the same bracket.")
-                    st.write("Above diagonal (red) shows regression to lower brackets.")
-                    st.write("Below diagonal (green) shows improvement to higher brackets.")
                     st.write("---")
 
             # Acceleration transitions tab
@@ -81,10 +83,6 @@ def main():
                 for period, matrix in accel_transitions_detail.items():
                     st.write(f"Period: {period}")
                     st.dataframe(matrix, use_container_width=True)
-                    st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
-                    st.write("Diagonal values (blue) show users who remained in the same bracket.")
-                    st.write("Above diagonal (red) shows regression to lower brackets.")
-                    st.write("Below diagonal (green) shows improvement to higher brackets.")
                     st.write("---")
 
             # User selection for individual analysis
