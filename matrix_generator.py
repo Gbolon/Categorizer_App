@@ -36,12 +36,6 @@ class MatrixGenerator:
             index=list(self.development_brackets.keys()) + ['Total Users'],
             columns=['Power', 'Acceleration'])
 
-        # Initialize progression analysis DataFrames
-        power_progression = pd.DataFrame(0, 
-            index=['Level Ups', 'Regressors', 'Bracket Jumps'],
-            columns=[f'Test {i}-{i+1}' for i in range(1, max_tests)])
-        accel_progression = power_progression.copy()
-
         # Initialize transition tracking for all movements
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
@@ -95,68 +89,51 @@ class MatrixGenerator:
                                 accel_counts.loc[category, test] += 1
 
                     # Increment total users once for all test columns
-                    # This ensures the same total for all test columns
                     for test in test_columns:
                         if test in power_brackets.index:
                             power_counts.loc['Total Users', test] += 1
                         if test in accel_brackets.index:
                             accel_counts.loc['Total Users', test] += 1
 
-                    # Process progression for multi-test users
+                    # Process transitions for multi-test users
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
                         next_test = test_columns[i+1]
                         transition_col = f'Test {i+1}-{i+2}'
 
-                        # Power progression
+                        # Power transitions
                         if current_test in power_brackets.index and next_test in power_brackets.index:
                             current_cat = power_brackets.loc[current_test, 'Category']
                             next_cat = power_brackets.loc[next_test, 'Category']
                             self._update_progression_counts(
                                 current_cat, next_cat, 
-                                power_progression, transition_col,
+                                transition_col,
                                 power_transitions[transition_col]
                             )
 
-                        # Acceleration progression
+                        # Acceleration transitions
                         if current_test in accel_brackets.index and next_test in accel_brackets.index:
                             current_cat = accel_brackets.loc[current_test, 'Category']
                             next_cat = accel_brackets.loc[next_test, 'Category']
                             self._update_progression_counts(
                                 current_cat, next_cat, 
-                                accel_progression, transition_col,
+                                transition_col,
                                 accel_transitions[transition_col]
                             )
-
-        # Analyze transition patterns
-        power_patterns = self._analyze_transition_patterns(power_transitions)
-        accel_patterns = self._analyze_transition_patterns(accel_transitions)
 
         # Generate detailed transition matrices
         power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
         accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
 
-        return (power_counts, accel_counts, power_progression, accel_progression,
-                power_patterns, accel_patterns, single_test_distribution,
+        return (power_counts, accel_counts, single_test_distribution,
                 power_transitions_detail, accel_transitions_detail)
 
-    def _update_progression_counts(self, current_cat, next_cat, progression_df, col, transitions_list):
+    def _update_progression_counts(self, current_cat, next_cat, col, transitions_list):
         """Update progression counts based on category changes."""
         if current_cat and next_cat and pd.notna(current_cat) and pd.notna(next_cat):
             try:
-                current_idx = self.bracket_order.index(current_cat)
-                next_idx = self.bracket_order.index(next_cat)
-                change = next_idx - current_idx
-
-                # Always record the transition for detailed analysis
+                # Record the transition for detailed analysis
                 transitions_list.append((current_cat, next_cat))
-
-                if change == 1:  # Exactly one bracket improvement
-                    progression_df.loc['Level Ups', col] += 1
-                elif change > 1:  # Multiple bracket improvement
-                    progression_df.loc['Bracket Jumps', col] += 1
-                elif change < 0:  # Any regression
-                    progression_df.loc['Regressors', col] += 1
 
             except ValueError:
                 # Skip if category is not in bracket_order
