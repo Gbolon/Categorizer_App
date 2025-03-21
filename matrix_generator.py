@@ -239,14 +239,20 @@ class MatrixGenerator:
 
                 return styles
 
-            # Create a new MultiIndex for the columns
+            # Create a new MultiIndex for the columns with centered text
             col_index = pd.MultiIndex.from_tuples([
                 ('Ending Bracket', col) for col in matrix.columns
             ])
             matrix.columns = col_index
 
-            # Apply static color formatting and number formatting to the DataFrame
-            styled_matrix = matrix.style.format("{:.0f}").apply(highlight_cells, axis=None)
+            # Apply static color formatting, number formatting, and header styling to the DataFrame
+            styled_matrix = (matrix.style
+                           .format("{:.0f}")
+                           .apply(highlight_cells, axis=None)
+                           .set_table_styles([{
+                               'selector': 'th.col_heading',
+                               'props': [('text-align', 'center')]
+                           }]))
 
             transition_matrices[period] = styled_matrix
 
