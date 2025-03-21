@@ -65,9 +65,31 @@ def main():
             # Display average metrics in right column
             with col2:
                 st.write("Single Test Users Averages")
-                # Calculate averages excluding 'Total Users' row
-                power_avg = single_test_distribution.loc[:'Severely Under Developed', 'Power'].sum() / single_test_distribution.loc['Total Users', 'Power'] * 100 if single_test_distribution.loc['Total Users', 'Power'] > 0 else 0
-                accel_avg = single_test_distribution.loc[:'Severely Under Developed', 'Acceleration'].sum() / single_test_distribution.loc['Total Users', 'Acceleration'] * 100 if single_test_distribution.loc['Total Users', 'Acceleration'] > 0 else 0
+                # Define bracket midpoints for weighted average calculation
+                bracket_scores = {
+                    'Goal Hit': 100,
+                    'Elite': 95,
+                    'Above Average': 83,
+                    'Average': 63,
+                    'Under Developed': 38,
+                    'Severely Under Developed': 12.5
+                }
+
+                # Calculate weighted averages for Power and Acceleration
+                def calculate_weighted_average(column):
+                    total_users = single_test_distribution.loc['Total Users', column]
+                    if total_users == 0:
+                        return 0
+
+                    weighted_sum = sum(
+                        single_test_distribution.loc[bracket, column] * score
+                        for bracket, score in bracket_scores.items()
+                        if bracket in single_test_distribution.index
+                    )
+                    return weighted_sum / total_users
+
+                power_avg = calculate_weighted_average('Power')
+                accel_avg = calculate_weighted_average('Acceleration')
 
                 # Create metrics
                 st.metric("Average Overall Power Development", f"{power_avg:.1f}%")
