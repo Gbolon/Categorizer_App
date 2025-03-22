@@ -428,18 +428,18 @@ class MatrixGenerator:
         """Calculate average development scores by body region for multi-test users."""
         from exercise_constants import VALID_EXERCISES
 
-        # Initialize results dictionary
+        # Initialize results dictionary with exactly 3 test columns
         body_region_averages = {
             region: pd.DataFrame(
                 0, 
                 index=['Power Average', 'Acceleration Average'],
-                columns=[f'Test {i}' for i in range(1, max_tests + 1)]
+                columns=[f'Test {i}' for i in range(1, 4)]  # Explicitly use 3 tests
             ) for region in VALID_EXERCISES.keys()
         }
 
         # Track number of users per test for each region
         users_per_test = {
-            region: {f'Test {i}': 0 for i in range(1, max_tests + 1)}
+            region: {f'Test {i}': 0 for i in range(1, 4)}  # Explicitly use 3 tests
             for region in VALID_EXERCISES.keys()
         }
 
@@ -454,7 +454,7 @@ class MatrixGenerator:
                 if len(power_dev.columns) >= 2:
                     # Process each body region
                     for region, exercises in VALID_EXERCISES.items():
-                        for test_col in power_dev.columns:
+                        for test_col in power_dev.columns[:3]:  # Limit to first 3 tests
                             # Get relevant exercises for this region (including dominance variations)
                             region_exercises = []
                             for exercise in exercises:
