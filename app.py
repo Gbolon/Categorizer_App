@@ -130,7 +130,7 @@ def main():
             st.write("Group averages by body region for multi-test users")
 
             # Calculate body region averages
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df, max_tests=3)
 
             # Create columns for each body region
             region_cols = st.columns(len(VALID_EXERCISES))
