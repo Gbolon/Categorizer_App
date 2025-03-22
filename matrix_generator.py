@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from exercise_constants import ALL_EXERCISES
+from exercise_constants import ALL_EXERCISES, VALID_EXERCISES
 from goal_standards import calculate_development_score
 
 class MatrixGenerator:
@@ -423,3 +423,63 @@ class MatrixGenerator:
                     break
 
         return brackets_df
+
+    def calculate_body_region_averages(self, df, max_tests=4):
+        """Calculate average development scores by body region for multi-test users."""
+        from exercise_constants import VALID_EXERCISES
+
+        # Initialize results dictionary
+        body_region_averages = {
+            region: pd.DataFrame(
+                0, 
+                index=['Power Average', 'Acceleration Average'],
+                columns=[f'Test {i}' for i in range(1, max_tests + 1)]
+            ) for region in VALID_EXERCISES.keys()
+        }
+
+        # Track number of users per test for each region
+        users_per_test = {
+            region: {f'Test {i}': 0 for i in range(1, max_tests + 1)}
+            for region in VALID_EXERCISES.keys()
+        }
+
+        # Process each user
+        for user in df['user name'].unique():
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user)
+            if matrices[2] is not None:  # If development matrices exist
+                power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
+
+                # Only process multi-test users
+                if len(power_dev.columns) >= 2:
+                    # Process each body region
+                    for region, exercises in VALID_EXERCISES.items():
+                        for test_col in power_dev.columns:
+                            # Get relevant exercises for this region (including dominance variations)
+                            region_exercises = []
+                            for exercise in exercises:
+                                matching_exercises = [ex for ex in power_dev.index if exercise in ex]
+                                region_exercises.extend(matching_exercises)
+
+                            # Calculate averages for this region if data exists
+                            power_scores = power_dev.loc[region_exercises, test_col].dropna()
+                            accel_scores = accel_dev.loc[region_exercises, test_col].dropna()
+
+                            if not power_scores.empty or not accel_scores.empty:
+                                # Update sums
+                                if not power_scores.empty:
+                                    body_region_averages[region].loc['Power Average', test_col] += power_scores.mean()
+                                if not accel_scores.empty:
+                                    body_region_averages[region].loc['Acceleration Average', test_col] += accel_scores.mean()
+                                users_per_test[region][test_col] += 1
+
+        # Calculate final averages
+        for region in VALID_EXERCISES.keys():
+            for test in body_region_averages[region].columns:
+                n_users = users_per_test[region][test]
+                if n_users > 0:
+                    body_region_averages[region][test] /= n_users
+                else:
+                    body_region_averages[region][test] = np.nan
+
+        return body_region_averages

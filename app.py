@@ -125,6 +125,24 @@ def main():
                     st.dataframe(matrix, use_container_width=True)
                     st.write("---")
 
+            # Body Region Meta Analysis
+            st.subheader("Body Region Meta Analysis")
+            st.write("Group averages by body region for multi-test users")
+
+            # Calculate body region averages
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
+
+            # Create columns for each body region
+            region_cols = st.columns(len(VALID_EXERCISES))
+
+            # Display each region's data
+            for i, (region, averages) in enumerate(body_region_averages.items()):
+                with region_cols[i]:
+                    st.write(f"**{region}**")
+                    styled_averages = averages.style.format("{:.1f}%")
+                    st.dataframe(styled_averages)
+
+
             # User selection for individual analysis
             st.subheader("Individual User Analysis")
             users = data_processor.get_user_list(processed_df)
