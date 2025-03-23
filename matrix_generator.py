@@ -483,3 +483,65 @@ class MatrixGenerator:
                     body_region_averages[region][test] = np.nan
 
         return body_region_averages
+    
+    def calculate_exercise_averages_by_region(self, df, max_tests=3):
+        """Calculate exercise-level averages grouped by body region for multi-test users."""
+        # Initialize results dictionary
+        exercise_averages = {}
+
+        for region, exercises in VALID_EXERCISES.items():
+            # Create DataFrame for this region's exercises
+            region_data = {}
+
+            for exercise in exercises:
+                # Initialize empty data for this exercise
+                exercise_data = pd.DataFrame(
+                    0,
+                    index=['Power Average', 'Acceleration Average'],
+                    columns=[f'Test {i}' for i in range(1, 4)]  # Use exactly 3 tests
+                )
+                region_data[exercise] = {
+                    'data': exercise_data,
+                    'users': {f'Test {i}': 0 for i in range(1, 4)}
+                }
+
+            exercise_averages[region] = region_data
+
+        # Process each user
+        for user in df['user name'].unique():
+            matrices = self.generate_user_matrices(df, user)
+            if matrices[2] is not None:  # If development matrices exist
+                power_dev, accel_dev = matrices[2], matrices[3]
+
+                # Only process multi-test users
+                if len(power_dev.columns) >= 2:
+                    for region, exercises in VALID_EXERCISES.items():
+                        for exercise in exercises:
+                            # Find all variations of this exercise (including dominance)
+                            exercise_variations = [ex for ex in power_dev.index if exercise in ex]
+
+                            for test_num in range(1, 4):
+                                test_col = f'Test {test_num}'
+                                if test_col in power_dev.columns:
+                                    # Get scores for all variations of this exercise
+                                    power_scores = power_dev.loc[exercise_variations, test_col].dropna()
+                                    accel_scores = accel_dev.loc[exercise_variations, test_col].dropna()
+
+                                    if not power_scores.empty or not accel_scores.empty:
+                                        if not power_scores.empty:
+                                            exercise_averages[region][exercise]['data'].loc['Power Average', test_col] += power_scores.mean()
+                                        if not accel_scores.empty:
+                                            exercise_averages[region][exercise]['data'].loc['Acceleration Average', test_col] += accel_scores.mean()
+                                        exercise_averages[region][exercise]['users'][test_col] += 1
+
+        # Calculate final averages
+        for region in VALID_EXERCISES.keys():
+            for exercise in VALID_EXERCISES[region]:
+                for test in [f'Test {i}' for i in range(1, 4)]:
+                    n_users = exercise_averages[region][exercise]['users'][test]
+                    if n_users > 0:
+                        exercise_averages[region][exercise]['data'][test] /= n_users
+                    else:
+                        exercise_averages[region][exercise]['data'][test] = np.nan
+
+        return exercise_averages

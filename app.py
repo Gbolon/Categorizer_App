@@ -142,6 +142,39 @@ def main():
                     styled_averages = averages.style.format("{:.1f}%")
                     st.dataframe(styled_averages)
 
+            # Display detailed exercise averages by region
+            st.write("### Detailed Exercise Averages by Body Region")
+            st.write("Group averages for individual exercises")
+
+            # Calculate exercise-level averages
+            exercise_averages = matrix_generator.calculate_exercise_averages_by_region(processed_df, max_tests=3)
+
+            # Display each region's exercise data
+            for region in VALID_EXERCISES.keys():
+                st.write(f"#### {region}")
+
+                # Combine all exercises in this region into a single DataFrame
+                region_exercises = VALID_EXERCISES[region]
+                combined_data = []
+
+                for exercise in region_exercises:
+                    exercise_data = exercise_averages[region][exercise]['data']
+                    # Add exercise name as index prefix
+                    exercise_rows = []
+                    for metric in ['Power Average', 'Acceleration Average']:
+                        row_data = exercise_data.loc[metric].to_dict()
+                        row_data['Exercise'] = exercise
+                        row_data['Metric'] = metric
+                        exercise_rows.append(row_data)
+                    combined_data.extend(exercise_rows)
+
+                # Create and style DataFrame
+                if combined_data:
+                    df_region = pd.DataFrame(combined_data)
+                    df_region = df_region.set_index(['Exercise', 'Metric'])
+                    styled_df = df_region.style.format("{:.1f}%")
+                    st.dataframe(styled_df, use_container_width=True)
+
 
             # User selection for individual analysis
             st.subheader("Individual User Analysis")
