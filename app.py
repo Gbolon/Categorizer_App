@@ -22,7 +22,7 @@ def main():
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
-                                      type=['csv', 'xlsx'])
+                                    type=['csv', 'xlsx'])
 
     if uploaded_file is not None:
         try:
@@ -52,7 +52,7 @@ def main():
             with st.expander("Data Preview", expanded=False):
                 st.dataframe(processed_df.head())
 
-            # Generate group-level analysis with date constraints if enabled
+            # Generate group-level analysis with date constraints
             (power_counts, accel_counts, single_test_distribution,
              power_transitions_detail, accel_transitions_detail,
              power_average, accel_average,
@@ -61,18 +61,6 @@ def main():
                  processed_df, 
                  apply_date_constraints=enable_date_constraints
              )
-
-            # Show data preview in collapsed expander
-            with st.expander("Data Preview", expanded=False):
-                st.dataframe(processed_df.head())
-
-            # Generate group-level analysis
-            (power_counts, accel_counts, single_test_distribution,
-             power_transitions_detail, accel_transitions_detail,
-             power_average, accel_average,
-             avg_power_change_1_2, avg_accel_change_1_2,
-             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(processed_df)
-
             # Display group-level analysis
             st.subheader("Group Development Analysis")
 
