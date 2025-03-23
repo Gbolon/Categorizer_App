@@ -14,7 +14,6 @@ class MatrixGenerator:
             'Under Developed': (26, 50),
             'Severely Under Developed': (0, 25)
         }
-        # Define bracket order for progression analysis
         self.bracket_order = [
             'Goal Hit',
             'Elite',
@@ -23,8 +22,11 @@ class MatrixGenerator:
             'Under Developed',
             'Severely Under Developed'
         ]
+        # Define time constraints for test instances
+        self.min_days_between_tests = 50
+        self.max_days_between_tests = 120
 
-    def generate_group_analysis(self, df, max_tests=4):
+    def generate_group_analysis(self, df, apply_date_constraints=False, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
@@ -54,7 +56,7 @@ class MatrixGenerator:
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user)
+            matrices = self.generate_user_matrices(df, user, apply_date_constraints)
 
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
@@ -285,7 +287,7 @@ class MatrixGenerator:
 
         return patterns_df
 
-    def generate_user_matrices(self, df, user_name):
+    def generate_user_matrices(self, df, user_name, apply_date_constraints=False):
         """Generate test instance matrices for a specific user."""
         user_data = df[df['user name'] == user_name].copy()
 
@@ -293,49 +295,83 @@ class MatrixGenerator:
         power_matrix = {}
         accel_matrix = {}
         test_instances = {}
+        test_dates = {}  # Track dates for each test instance
 
-        # Get user's sex for development calculations
         if user_data.empty:
             return power_matrix, accel_matrix, None, None, None, None, None
 
+        # Get user's sex for development calculations
         user_sex = user_data['sex'].iloc[0]
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
             return power_matrix, accel_matrix, None, None, None, None, None
 
-        # Process each exercise chronologically and keep power/acceleration paired
-        for _, row in user_data.iterrows():
-            exercise = row['full_exercise_name']
-            power_value = row['power - high']
-            accel_value = row['acceleration - high']
+        # Sort by exercise and date
+        user_data = user_data.sort_values(['exercise name', 'exercise createdAt'])
 
-            # Only process if both power and acceleration are present
-            if pd.notna(power_value) and pd.notna(accel_value):
-                # Find earliest available test instance for this exercise
-                target_instance = 1
-                while target_instance in test_instances and exercise in test_instances[target_instance]:
-                    target_instance += 1
+        # Process each exercise
+        for exercise_name, exercise_data in user_data.groupby('exercise name'):
+            current_test = 1
+            last_test_date = None
 
-                # Initialize new test instance if needed
-                if target_instance not in power_matrix:
-                    power_matrix[target_instance] = {}
-                    accel_matrix[target_instance] = {}
-                    test_instances[target_instance] = set()
+            for _, row in exercise_data.iterrows():
+                exercise = row['full_exercise_name']
+                power_value = row['power - high']
+                accel_value = row['acceleration - high']
+                test_date = pd.to_datetime(row['exercise createdAt'])
 
-                # Add exercise data to matrices as a pair
-                power_matrix[target_instance][exercise] = power_value
-                accel_matrix[target_instance][exercise] = accel_value
-                test_instances[target_instance].add(exercise)
+                # Skip if missing values
+                if pd.isna(power_value) or pd.isna(accel_value):
+                    continue
+
+                if apply_date_constraints and last_test_date is not None:
+                    # Calculate days between tests
+                    days_between = (test_date - last_test_date).days
+
+                    # Skip if not within constraints
+                    if days_between < self.min_days_between_tests:
+                        continue
+                    if days_between > self.max_days_between_tests:
+                        # Start a new sequence
+                        current_test = 1
+                        last_test_date = None
+                        continue
+
+                # Initialize test instance if needed
+                if current_test not in power_matrix:
+                    power_matrix[current_test] = {}
+                    accel_matrix[current_test] = {}
+                    test_instances[current_test] = set()
+                    test_dates[current_test] = {}
+
+                # Add exercise data
+                power_matrix[current_test][exercise] = power_value
+                accel_matrix[current_test][exercise] = accel_value
+                test_instances[current_test].add(exercise)
+                test_dates[current_test][exercise] = test_date
+
+                last_test_date = test_date
+                current_test += 1
+
+        # Renumber test instances sequentially
+        power_matrix_final = {}
+        accel_matrix_final = {}
+        new_test_num = 1
+
+        for test_num in sorted(power_matrix.keys()):
+            power_matrix_final[new_test_num] = power_matrix[test_num]
+            accel_matrix_final[new_test_num] = accel_matrix[test_num]
+            new_test_num += 1
 
         # Fill empty cells with NaN
-        for instance in power_matrix:
+        for instance in power_matrix_final:
             for exercise in self.exercises:
-                if exercise not in power_matrix[instance]:
-                    power_matrix[instance][exercise] = np.nan
-                if exercise not in accel_matrix[instance]:
-                    accel_matrix[instance][exercise] = np.nan
+                if exercise not in power_matrix_final[instance]:
+                    power_matrix_final[instance][exercise] = np.nan
+                if exercise not in accel_matrix_final[instance]:
+                    accel_matrix_final[instance][exercise] = np.nan
 
         # Convert to DataFrames
-        power_df, accel_df = self._convert_to_dataframes(power_matrix, accel_matrix)
+        power_df, accel_df = self._convert_to_dataframes(power_matrix_final, accel_matrix_final)
 
         # Generate development matrices if sex is available
         power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')

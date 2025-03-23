@@ -26,7 +26,7 @@ def main():
 
     if uploaded_file is not None:
         try:
-            # Load and validate data
+            # Load data
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
             else:
@@ -39,8 +39,28 @@ def main():
                 st.error(message)
                 return
 
-            # Process data
-            processed_df = data_processor.preprocess_data(df)
+            # Add date constraint toggle
+            enable_date_constraints = st.checkbox(
+                "Enable Date Range Constraints",
+                help="When enabled, enforces 50-120 day gaps between consecutive test instances"
+            )
+
+            # Process data with or without date constraints
+            processed_df = data_processor.preprocess_data(df, enable_date_constraints)
+
+            # Show data preview in collapsed expander
+            with st.expander("Data Preview", expanded=False):
+                st.dataframe(processed_df.head())
+
+            # Generate group-level analysis with date constraints if enabled
+            (power_counts, accel_counts, single_test_distribution,
+             power_transitions_detail, accel_transitions_detail,
+             power_average, accel_average,
+             avg_power_change_1_2, avg_accel_change_1_2,
+             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(
+                 processed_df, 
+                 apply_date_constraints=enable_date_constraints
+             )
 
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
@@ -80,10 +100,10 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
             with col2:
                 st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
 
             # Display Acceleration development distribution and changes
             st.write("Multi-Test Users Acceleration Development Distribution")
@@ -94,10 +114,10 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
             with col2:
                 st.metric("Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
 
             # Display detailed transition analysis
             st.subheader("Detailed Transition Analysis")
