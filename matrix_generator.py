@@ -1,6 +1,13 @@
 import pandas as pd
 import numpy as np
-from exercise_constants import ALL_EXERCISES, VALID_EXERCISES
+from exercise_constants import (
+    ALL_EXERCISES,
+    VALID_EXERCISES,
+    EXERCISE_DOMINANCE,
+    is_valid_exercise_dominance,
+    get_full_exercise_name,
+    standardize_dominance
+)
 from goal_standards import calculate_development_score
 
 class MatrixGenerator:
