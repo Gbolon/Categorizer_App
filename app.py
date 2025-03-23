@@ -20,6 +20,16 @@ def main():
     data_processor = DataProcessor()
     matrix_generator = MatrixGenerator()
 
+    # Add minimum days filter in sidebar
+    st.sidebar.title("Analysis Settings")
+    min_days_between_tests = st.sidebar.number_input(
+        "Minimum days between tests",
+        min_value=1,
+        max_value=365,
+        value=30,
+        help="Minimum number of days required between consecutive tests of the same exercise"
+    )
+
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
                                       type=['csv', 'xlsx'])
@@ -46,12 +56,13 @@ def main():
             with st.expander("Data Preview", expanded=False):
                 st.dataframe(processed_df.head())
 
-            # Generate group-level analysis
+            # Generate group-level analysis with minimum days filter
             (power_counts, accel_counts, single_test_distribution,
              power_transitions_detail, accel_transitions_detail,
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
-             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(processed_df)
+             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(
+                 processed_df, min_days_between_tests=min_days_between_tests)
 
             # Display group-level analysis
             st.subheader("Group Development Analysis")
@@ -80,10 +91,10 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
             with col2:
                 st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
 
             # Display Acceleration development distribution and changes
             st.write("Multi-Test Users Acceleration Development Distribution")
@@ -94,10 +105,10 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
             with col2:
                 st.metric("Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
-                         delta_color="normal")
+                           delta_color="normal")
 
             # Display detailed transition analysis
             st.subheader("Detailed Transition Analysis")
