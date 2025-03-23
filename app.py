@@ -154,16 +154,16 @@ def main():
                 st.write(f"#### {region}")
 
                 # Combine all exercises in this region into a single DataFrame
-                region_exercises = VALID_EXERCISES[region]
+                region_exercises = exercise_averages[region].keys()
                 combined_data = []
 
-                for exercise in region_exercises:
-                    exercise_data = exercise_averages[region][exercise]['data']
+                for exercise_name in region_exercises:
+                    exercise_data = exercise_averages[region][exercise_name]['data']
                     # Add exercise name as index prefix
                     exercise_rows = []
                     for metric in ['Power Average', 'Acceleration Average']:
                         row_data = exercise_data.loc[metric].to_dict()
-                        row_data['Exercise'] = exercise
+                        row_data['Exercise'] = exercise_name
                         row_data['Metric'] = metric
                         exercise_rows.append(row_data)
                     combined_data.extend(exercise_rows)
