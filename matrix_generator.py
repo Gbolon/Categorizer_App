@@ -24,7 +24,7 @@ class MatrixGenerator:
             'Severely Under Developed'
         ]
 
-    def generate_group_analysis(self, df, max_tests=4, min_days_between_tests=30):
+    def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
@@ -53,8 +53,8 @@ class MatrixGenerator:
 
         # Process each user
         for user in df['user name'].unique():
-            # Generate matrices for user with minimum days constraint
-            matrices = self.generate_user_matrices(df, user, min_days_between_tests=min_days_between_tests)
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user)
 
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
@@ -285,7 +285,7 @@ class MatrixGenerator:
 
         return patterns_df
 
-    def generate_user_matrices(self, df, user_name, min_days_between_tests=30):
+    def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""
         user_data = df[df['user name'] == user_name].copy()
 
@@ -293,7 +293,6 @@ class MatrixGenerator:
         power_matrix = {}
         accel_matrix = {}
         test_instances = {}
-        last_test_dates = {}  # Track last test date for each exercise
 
         # Get user's sex for development calculations
         if user_data.empty:
@@ -303,29 +302,18 @@ class MatrixGenerator:
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
             return power_matrix, accel_matrix, None, None, None, None, None
 
-        # Sort by exercise and date
-        user_data = user_data.sort_values(['full_exercise_name', 'exercise createdAt'])
-
         # Process each exercise chronologically and keep power/acceleration paired
         for _, row in user_data.iterrows():
             exercise = row['full_exercise_name']
             power_value = row['power - high']
             accel_value = row['acceleration - high']
-            test_date = pd.to_datetime(row['exercise createdAt'])
 
             # Only process if both power and acceleration are present
             if pd.notna(power_value) and pd.notna(accel_value):
-                # Check if enough time has passed since last test
+                # Find earliest available test instance for this exercise
                 target_instance = 1
-                if exercise in last_test_dates:
-                    # Check all previous test instances for this exercise
-                    for instance, last_date in last_test_dates[exercise].items():
-                        days_diff = (test_date - last_date).days
-                        if days_diff < min_days_between_tests:
-                            # Not enough time has passed, skip to next test instance
-                            target_instance = instance + 1
-                            break
-                        target_instance = instance + 1
+                while target_instance in test_instances and exercise in test_instances[target_instance]:
+                    target_instance += 1
 
                 # Initialize new test instance if needed
                 if target_instance not in power_matrix:
@@ -337,11 +325,6 @@ class MatrixGenerator:
                 power_matrix[target_instance][exercise] = power_value
                 accel_matrix[target_instance][exercise] = accel_value
                 test_instances[target_instance].add(exercise)
-
-                # Update last test date for this exercise
-                if exercise not in last_test_dates:
-                    last_test_dates[exercise] = {}
-                last_test_dates[exercise][target_instance] = test_date
 
         # Fill empty cells with NaN
         for instance in power_matrix:
