@@ -52,55 +52,54 @@ class MatrixGenerator:
         power_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
         accel_transitions = {f'Test {i}-{i+1}': [] for i in range(1, max_tests)}
 
+
         # Process each user
         for user in df['user name'].unique():
-            # First generate matrices without date constraints to check if it's a single-test user
-            initial_matrices = self.generate_user_matrices(df, user, apply_date_constraints=False)
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user, apply_date_constraints)
 
-            if initial_matrices[2] is not None:  # If development matrices exist
-                power_dev = initial_matrices[2]
-
-                # Determine if user has multiple tests
-                has_multiple_tests = len(power_dev.columns) >= 2
-
-                if has_multiple_tests and apply_date_constraints:
-                    # Only apply date constraints for multi-test users when enabled
-                    matrices = self.generate_user_matrices(df, user, apply_date_constraints=True)
-                else:
-                    # Use the initial matrices for single-test users or when constraints are disabled
-                    matrices = initial_matrices
-
+            if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
 
+                # Determine if user has multiple tests
+                has_multiple_tests = len(power_brackets) >= 2
+
+                # Update columns if needed (limited to max_tests)
+                test_columns = [f"Test {i}" for i in range(1, max_tests + 1)]
+                for test in test_columns:
+                    if test not in power_counts.columns:
+                        power_counts[test] = 0
+                        accel_counts[test] = 0
+
                 if not has_multiple_tests:
-                    # Process single test users (unchanged from before)
+                    # Process single test users
                     if 'Test 1' in power_brackets.index and 'Test 1' in accel_brackets.index:
+                        # Get overall scores from overall_dev matrix
                         power_score = overall_dev.loc['Power Average', 'Test 1']
                         accel_score = overall_dev.loc['Acceleration Average', 'Test 1']
 
+                        # Add to single test score lists
                         if pd.notna(power_score):
                             single_test_power_scores.append(power_score)
                         if pd.notna(accel_score):
                             single_test_accel_scores.append(accel_score)
 
+                        # Get categories for both power and acceleration
                         power_category = power_brackets.loc['Test 1', 'Category']
                         accel_category = accel_brackets.loc['Test 1', 'Category']
 
+                        # Only count if both categories are valid
                         if (power_category in self.development_brackets and 
                             accel_category in self.development_brackets):
+                            # Increment category counts
                             single_test_distribution.loc[power_category, 'Power'] += 1
                             single_test_distribution.loc[accel_category, 'Acceleration'] += 1
+                            # Increment total users (same for both columns)
                             single_test_distribution.loc['Total Users', 'Power'] += 1
                             single_test_distribution.loc['Total Users', 'Acceleration'] += 1
 
                 else:
-                    # Update columns if needed (limited to max_tests)
-                    test_columns = [f"Test {i}" for i in range(1, max_tests + 1)]
-                    for test in test_columns:
-                        if test not in power_counts.columns:
-                            power_counts[test] = 0
-                            accel_counts[test] = 0
-
+                    # Process multi-test users
                     for test, row in power_brackets.iterrows():
                         if test in test_columns:
                             category = row['Category']
@@ -148,7 +147,7 @@ class MatrixGenerator:
                             power_counts.loc['Total Users', test] += 1
                         if test in accel_brackets.index:
                             accel_counts.loc['Total Users', test] += 1
-                    
+
                     # Process transitions for multi-test users
                     for i in range(len(test_columns)-1):
                         current_test = test_columns[i]
