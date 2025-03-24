@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 def main():
-    st.title("Site Development Bracketer")
+    st.markdown("<h1 style='font-size: 3em;'>Site Development Bracketer</h1>", unsafe_allow_html=True)
 
     # Initialize processors
     data_processor = DataProcessor()
@@ -54,7 +54,7 @@ def main():
              avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
-            st.subheader("Group Development Analysis")
+            st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
 
             # Create two columns for side-by-side layout
             col1, col2 = st.columns(2)
@@ -100,7 +100,7 @@ def main():
                          delta_color="normal")
 
             # Display detailed transition analysis
-            st.subheader("Detailed Transition Analysis")
+            st.markdown("<h2 style='font-size: 1.875em;'>Detailed Transition Analysis</h2>", unsafe_allow_html=True)
 
             # Display reading guide once at the top
             st.write("Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.")
@@ -126,7 +126,7 @@ def main():
                     st.write("---")
 
             # Body Region Meta Analysis
-            st.subheader("Body Region Meta Analysis")
+            st.markdown("<h2 style='font-size: 1.875em;'>Body Region Meta Analysis</h2>", unsafe_allow_html=True)
             st.write("Group averages by body region for multi-test users")
 
             # Calculate body region averages
@@ -144,7 +144,7 @@ def main():
 
 
             # User selection for individual analysis
-            st.subheader("Individual User Analysis")
+            st.markdown("<h2 style='font-size: 1.875em;'>Individual User Analysis</h2>", unsafe_allow_html=True)
             users = data_processor.get_user_list(processed_df)
             selected_user = st.selectbox("Select User", users)
 
