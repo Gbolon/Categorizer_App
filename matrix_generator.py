@@ -180,6 +180,19 @@ class MatrixGenerator:
         power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
         accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
 
+        # Calculate time differences between tests
+        time_differences = []
+        for user in df['user name'].unique():
+            user_data = df[df['user name'] == user].copy()
+            if len(user_data) > 1:
+                # Sort by timestamp
+                user_data = user_data.sort_values('exercise createdAt')
+                # Calculate differences in days
+                time_diffs = user_data['exercise createdAt'].diff().dropna().dt.days
+                time_differences.extend(time_diffs.tolist())
+        
+        avg_days_between_tests = np.mean(time_differences) if time_differences else 0
+
         # Calculate average changes
         avg_power_change_1_2 = np.mean(test1_to_2_power) if test1_to_2_power else 0
         avg_accel_change_1_2 = np.mean(test1_to_2_accel) if test1_to_2_accel else 0
@@ -190,7 +203,8 @@ class MatrixGenerator:
                 power_transitions_detail, accel_transitions_detail,
                 power_average, accel_average,
                 avg_power_change_1_2, avg_accel_change_1_2,
-                avg_power_change_2_3, avg_accel_change_2_3)
+                avg_power_change_2_3, avg_accel_change_2_3,
+                avg_days_between_tests)
 
     def _update_progression_counts(self, current_cat, next_cat, col, transitions_list):
         """Update progression counts based on category changes."""

@@ -51,7 +51,8 @@ def main():
              power_transitions_detail, accel_transitions_detail,
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
-             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(processed_df)
+             avg_power_change_2_3, avg_accel_change_2_3,
+             avg_days_between_tests) = matrix_generator.generate_group_analysis(processed_df)
 
             # Display group-level analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Group Development Analysis</h2>", unsafe_allow_html=True)
@@ -70,6 +71,19 @@ def main():
                 st.write("Single Test Users Averages")
                 st.metric("Average Overall Power Development", f"{power_average:.1f}%")
                 st.metric("Average Overall Acceleration Development", f"{accel_average:.1f}%")
+
+            # Display Multi-Test User Averages
+            st.markdown("<h2 style='font-size: 1.875em;'>Multi-Test User Averages</h2>", unsafe_allow_html=True)
+            
+            # Create columns for the metrics
+            metric_col1, metric_col2, metric_col3 = st.columns(3)
+            
+            with metric_col1:
+                st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
+            with metric_col2:
+                st.metric("Power Change 1→2", f"{avg_power_change_1_2:+.1f}%")
+            with metric_col3:
+                st.metric("Power Change 2→3", f"{avg_power_change_2_3:+.1f}%")
 
             # Display Power development distribution and changes
             st.write("Multi-Test Users Power Development Distribution")
