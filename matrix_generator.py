@@ -402,13 +402,17 @@ class MatrixGenerator:
         accel_df = accel_df.reindex(self.exercises)
         accel_df.columns = [f"Test {i}" for i in range(1, len(accel_df.columns) + 1)]
 
-        # Add dominance information to column names
+        # Store dominance information separately in the index
         for test in power_df.columns:
             dominance_values = dominance_matrix.get(int(test.split()[1]), {})
             for exercise in power_df.index:
                 if dominance_values.get(exercise):
-                    power_df.loc[exercise, test] = f"{power_df.loc[exercise, test]} ({dominance_values[exercise]})"
-                    accel_df.loc[exercise, test] = f"{accel_df.loc[exercise, test]} ({dominance_values[exercise]})"
+                    # Create a new index label with dominance
+                    new_index = f"{exercise} ({dominance_values[exercise]})"
+                    # Update the index while preserving the numeric values
+                    if exercise in power_df.index:
+                        power_df.rename(index={exercise: new_index}, inplace=True)
+                        accel_df.rename(index={exercise: new_index}, inplace=True)
 
         return power_df, accel_df
 
