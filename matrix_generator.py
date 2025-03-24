@@ -294,6 +294,7 @@ class MatrixGenerator:
         # Initialize matrices
         power_matrix = {}
         accel_matrix = {}
+        dominance_matrix = {}
         test_instances = {}
         test_dates = {}  # Track dates for each test instance
 
@@ -317,6 +318,7 @@ class MatrixGenerator:
                 exercise = row['full_exercise_name']
                 power_value = row['power - high']
                 accel_value = row['acceleration - high']
+                dominance_value = row.get('dominance', '')
                 test_date = pd.to_datetime(row['exercise createdAt'])
 
                 # Skip if missing values
@@ -340,12 +342,14 @@ class MatrixGenerator:
                 if current_test not in power_matrix:
                     power_matrix[current_test] = {}
                     accel_matrix[current_test] = {}
+                    dominance_matrix[current_test] = {}
                     test_instances[current_test] = set()
                     test_dates[current_test] = {}
 
                 # Add exercise data
                 power_matrix[current_test][exercise] = power_value
                 accel_matrix[current_test][exercise] = accel_value
+                dominance_matrix[current_test][exercise] = dominance_value
                 test_instances[current_test].add(exercise)
                 test_dates[current_test][exercise] = test_date
 
@@ -371,7 +375,7 @@ class MatrixGenerator:
                     accel_matrix_final[instance][exercise] = np.nan
 
         # Convert to DataFrames
-        power_df, accel_df = self._convert_to_dataframes(power_matrix_final, accel_matrix_final)
+        power_df, accel_df = self._convert_to_dataframes(power_matrix_final, accel_matrix_final, dominance_matrix)
 
         # Generate development matrices if sex is available
         power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
@@ -386,7 +390,7 @@ class MatrixGenerator:
 
         return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
 
-    def _convert_to_dataframes(self, power_matrix, accel_matrix):
+    def _convert_to_dataframes(self, power_matrix, accel_matrix, dominance_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
         # Create DataFrame for power
         power_df = pd.DataFrame(power_matrix)
@@ -397,6 +401,14 @@ class MatrixGenerator:
         accel_df = pd.DataFrame(accel_matrix)
         accel_df = accel_df.reindex(self.exercises)
         accel_df.columns = [f"Test {i}" for i in range(1, len(accel_df.columns) + 1)]
+
+        # Add dominance information to column names
+        for test in power_df.columns:
+            dominance_values = dominance_matrix.get(int(test.split()[1]), {})
+            for exercise in power_df.index:
+                if dominance_values.get(exercise):
+                    power_df.loc[exercise, test] = f"{power_df.loc[exercise, test]} ({dominance_values[exercise]})"
+                    accel_df.loc[exercise, test] = f"{accel_df.loc[exercise, test]} ({dominance_values[exercise]})"
 
         return power_df, accel_df
 
