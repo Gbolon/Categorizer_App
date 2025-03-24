@@ -74,16 +74,7 @@ def main():
 
             # Display Multi-Test User Averages
             st.markdown("<h2 style='font-size: 1.875em;'>Multi-Test User Averages</h2>", unsafe_allow_html=True)
-            
-            # Create columns for the metrics
-            metric_col1, metric_col2, metric_col3 = st.columns(3)
-            
-            with metric_col1:
-                st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
-            with metric_col2:
-                st.metric("Power Change 1→2", f"{avg_power_change_1_2:+.1f}%")
-            with metric_col3:
-                st.metric("Power Change 2→3", f"{avg_power_change_2_3:+.1f}%")
+            st.metric("Average Days Between Tests", f"{avg_days_between_tests:.1f}")
 
             # Display Power development distribution and changes
             st.write("Multi-Test Users Power Development Distribution")
