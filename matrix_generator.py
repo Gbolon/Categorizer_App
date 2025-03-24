@@ -180,16 +180,20 @@ class MatrixGenerator:
         power_transitions_detail = self._analyze_detailed_transitions(power_transitions)
         accel_transitions_detail = self._analyze_detailed_transitions(accel_transitions)
 
-        # Calculate time differences between tests
+        # Calculate time differences between tests for the same movement
         time_differences = []
         for user in df['user name'].unique():
             user_data = df[df['user name'] == user].copy()
             if len(user_data) > 1:
-                # Sort by timestamp
-                user_data = user_data.sort_values('exercise createdAt')
-                # Calculate differences in days
-                time_diffs = user_data['exercise createdAt'].diff().dropna().dt.days
-                time_differences.extend(time_diffs.tolist())
+                # Group by exercise and calculate time differences within each exercise
+                for exercise in user_data['full_exercise_name'].unique():
+                    exercise_data = user_data[user_data['full_exercise_name'] == exercise]
+                    if len(exercise_data) > 1:
+                        # Sort by timestamp
+                        exercise_data = exercise_data.sort_values('exercise createdAt')
+                        # Calculate differences in days
+                        time_diffs = exercise_data['exercise createdAt'].diff().dropna().dt.days
+                        time_differences.extend(time_diffs.tolist())
         
         avg_days_between_tests = np.mean(time_differences) if time_differences else 0
 
