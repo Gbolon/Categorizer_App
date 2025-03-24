@@ -431,7 +431,7 @@ class MatrixGenerator:
         # Initialize results dictionary
         body_region_averages = {
             region: pd.DataFrame(
-                0, 
+                0.0,  # Initialize with float instead of int
                 index=['Power Average', 'Acceleration Average'],
                 columns=[f'Test {i}' for i in range(1, max_tests + 1)]
             ) for region in VALID_EXERCISES.keys()
@@ -454,7 +454,10 @@ class MatrixGenerator:
                 if len(power_dev.columns) >= 2:
                     # Process each body region
                     for region, exercises in VALID_EXERCISES.items():
-                        for test_col in power_dev.columns:
+                        # Only process up to max_tests columns
+                        test_cols = [col for col in power_dev.columns if int(col.split()[-1]) <= max_tests]
+
+                        for test_col in test_cols:
                             # Get relevant exercises for this region (including dominance variations)
                             region_exercises = []
                             for exercise in exercises:
@@ -466,11 +469,15 @@ class MatrixGenerator:
                             accel_scores = accel_dev.loc[region_exercises, test_col].dropna()
 
                             if not power_scores.empty or not accel_scores.empty:
-                                # Update sums
+                                # Calculate means only if we have valid scores
                                 if not power_scores.empty:
-                                    body_region_averages[region].loc['Power Average', test_col] += power_scores.mean()
+                                    power_mean = power_scores.mean()
+                                    if pd.notna(power_mean):
+                                        body_region_averages[region].loc['Power Average', test_col] += power_mean
                                 if not accel_scores.empty:
-                                    body_region_averages[region].loc['Acceleration Average', test_col] += accel_scores.mean()
+                                    accel_mean = accel_scores.mean()
+                                    if pd.notna(accel_mean):
+                                        body_region_averages[region].loc['Acceleration Average', test_col] += accel_mean
                                 users_per_test[region][test_col] += 1
 
         # Calculate final averages
@@ -478,7 +485,7 @@ class MatrixGenerator:
             for test in body_region_averages[region].columns:
                 n_users = users_per_test[region][test]
                 if n_users > 0:
-                    body_region_averages[region][test] /= n_users
+                    body_region_averages[region][test] = body_region_averages[region][test] / n_users
                 else:
                     body_region_averages[region][test] = np.nan
 
