@@ -44,7 +44,7 @@ class DataProcessor:
 
         return True, "Data validation successful"
 
-    def preprocess_data(self, df, apply_date_constraints=False):
+    def preprocess_data(self, df):
         """Clean and prepare the data for matrix generation."""
         # Create a copy to avoid modifying original data
         processed_df = df.copy()

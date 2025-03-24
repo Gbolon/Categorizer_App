@@ -14,6 +14,7 @@ class MatrixGenerator:
             'Under Developed': (26, 50),
             'Severely Under Developed': (0, 25)
         }
+        # Define bracket order for progression analysis
         self.bracket_order = [
             'Goal Hit',
             'Elite',
@@ -22,11 +23,8 @@ class MatrixGenerator:
             'Under Developed',
             'Severely Under Developed'
         ]
-        # Define time constraints for test instances
-        self.min_days_between_tests = 50
-        self.max_days_between_tests = 120
 
-    def generate_group_analysis(self, df, apply_date_constraints=False, max_tests=4):
+    def generate_group_analysis(self, df, max_tests=4):
         """Generate group-level analysis of development categories."""
         # Initialize count DataFrames for power and acceleration
         categories = list(self.development_brackets.keys()) + ['Total Users']
@@ -56,7 +54,7 @@ class MatrixGenerator:
         # Process each user
         for user in df['user name'].unique():
             # Generate matrices for user
-            matrices = self.generate_user_matrices(df, user, apply_date_constraints)
+            matrices = self.generate_user_matrices(df, user)
 
             if matrices[2] is not None:  # If development matrices exist
                 _, _, power_dev, accel_dev, overall_dev, power_brackets, accel_brackets = matrices
@@ -287,95 +285,57 @@ class MatrixGenerator:
 
         return patterns_df
 
-    def generate_user_matrices(self, df, user_name, apply_date_constraints=False):
+    def generate_user_matrices(self, df, user_name):
         """Generate test instance matrices for a specific user."""
         user_data = df[df['user name'] == user_name].copy()
 
         # Initialize matrices
         power_matrix = {}
         accel_matrix = {}
-        dominance_matrix = {}
         test_instances = {}
-        test_dates = {}  # Track dates for each test instance
 
+        # Get user's sex for development calculations
         if user_data.empty:
             return power_matrix, accel_matrix, None, None, None, None, None
 
-        # Get user's sex for development calculations
         user_sex = user_data['sex'].iloc[0]
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
             return power_matrix, accel_matrix, None, None, None, None, None
 
-        # Sort by exercise and date
-        user_data = user_data.sort_values(['exercise name', 'exercise createdAt'])
+        # Process each exercise chronologically and keep power/acceleration paired
+        for _, row in user_data.iterrows():
+            exercise = row['full_exercise_name']
+            power_value = row['power - high']
+            accel_value = row['acceleration - high']
 
-        # Process each exercise
-        for exercise_name, exercise_data in user_data.groupby('exercise name'):
-            current_test = 1
-            last_test_date = None
+            # Only process if both power and acceleration are present
+            if pd.notna(power_value) and pd.notna(accel_value):
+                # Find earliest available test instance for this exercise
+                target_instance = 1
+                while target_instance in test_instances and exercise in test_instances[target_instance]:
+                    target_instance += 1
 
-            for _, row in exercise_data.iterrows():
-                exercise = row['full_exercise_name']
-                power_value = row['power - high']
-                accel_value = row['acceleration - high']
-                dominance_value = row.get('dominance', '')
-                test_date = pd.to_datetime(row['exercise createdAt'])
+                # Initialize new test instance if needed
+                if target_instance not in power_matrix:
+                    power_matrix[target_instance] = {}
+                    accel_matrix[target_instance] = {}
+                    test_instances[target_instance] = set()
 
-                # Skip if missing values
-                if pd.isna(power_value) or pd.isna(accel_value):
-                    continue
-
-                if apply_date_constraints and last_test_date is not None:
-                    # Calculate days between tests
-                    days_between = (test_date - last_test_date).days
-
-                    # Skip if not within constraints
-                    if days_between < self.min_days_between_tests:
-                        continue
-                    if days_between > self.max_days_between_tests:
-                        # Start a new sequence
-                        current_test = 1
-                        last_test_date = None
-                        continue
-
-                # Initialize test instance if needed
-                if current_test not in power_matrix:
-                    power_matrix[current_test] = {}
-                    accel_matrix[current_test] = {}
-                    dominance_matrix[current_test] = {}
-                    test_instances[current_test] = set()
-                    test_dates[current_test] = {}
-
-                # Add exercise data
-                power_matrix[current_test][exercise] = power_value
-                accel_matrix[current_test][exercise] = accel_value
-                dominance_matrix[current_test][exercise] = dominance_value
-                test_instances[current_test].add(exercise)
-                test_dates[current_test][exercise] = test_date
-
-                last_test_date = test_date
-                current_test += 1
-
-        # Renumber test instances sequentially
-        power_matrix_final = {}
-        accel_matrix_final = {}
-        new_test_num = 1
-
-        for test_num in sorted(power_matrix.keys()):
-            power_matrix_final[new_test_num] = power_matrix[test_num]
-            accel_matrix_final[new_test_num] = accel_matrix[test_num]
-            new_test_num += 1
+                # Add exercise data to matrices as a pair
+                power_matrix[target_instance][exercise] = power_value
+                accel_matrix[target_instance][exercise] = accel_value
+                test_instances[target_instance].add(exercise)
 
         # Fill empty cells with NaN
-        for instance in power_matrix_final:
+        for instance in power_matrix:
             for exercise in self.exercises:
-                if exercise not in power_matrix_final[instance]:
-                    power_matrix_final[instance][exercise] = np.nan
-                if exercise not in accel_matrix_final[instance]:
-                    accel_matrix_final[instance][exercise] = np.nan
+                if exercise not in power_matrix[instance]:
+                    power_matrix[instance][exercise] = np.nan
+                if exercise not in accel_matrix[instance]:
+                    accel_matrix[instance][exercise] = np.nan
 
         # Convert to DataFrames
-        power_df, accel_df = self._convert_to_dataframes(power_matrix_final, accel_matrix_final, dominance_matrix)
+        power_df, accel_df = self._convert_to_dataframes(power_matrix, accel_matrix)
 
         # Generate development matrices if sex is available
         power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
@@ -390,7 +350,7 @@ class MatrixGenerator:
 
         return power_df, accel_df, power_dev_df, accel_dev_df, overall_dev_df, power_brackets, accel_brackets
 
-    def _convert_to_dataframes(self, power_matrix, accel_matrix, dominance_matrix):
+    def _convert_to_dataframes(self, power_matrix, accel_matrix):
         """Convert dictionary matrices to pandas DataFrames."""
         # Create DataFrame for power
         power_df = pd.DataFrame(power_matrix)
@@ -401,18 +361,6 @@ class MatrixGenerator:
         accel_df = pd.DataFrame(accel_matrix)
         accel_df = accel_df.reindex(self.exercises)
         accel_df.columns = [f"Test {i}" for i in range(1, len(accel_df.columns) + 1)]
-
-        # Store dominance information separately in the index
-        for test in power_df.columns:
-            dominance_values = dominance_matrix.get(int(test.split()[1]), {})
-            for exercise in power_df.index:
-                if dominance_values.get(exercise):
-                    # Create a new index label with dominance
-                    new_index = f"{exercise} ({dominance_values[exercise]})"
-                    # Update the index while preserving the numeric values
-                    if exercise in power_df.index:
-                        power_df.rename(index={exercise: new_index}, inplace=True)
-                        accel_df.rename(index={exercise: new_index}, inplace=True)
 
         return power_df, accel_df
 
@@ -480,18 +428,18 @@ class MatrixGenerator:
         """Calculate average development scores by body region for multi-test users."""
         from exercise_constants import VALID_EXERCISES
 
-        # Initialize results dictionary with exactly 3 test columns
+        # Initialize results dictionary
         body_region_averages = {
             region: pd.DataFrame(
                 0, 
                 index=['Power Average', 'Acceleration Average'],
-                columns=[f'Test {i}' for i in range(1, 4)]  # Explicitly use 3 tests
+                columns=[f'Test {i}' for i in range(1, max_tests + 1)]
             ) for region in VALID_EXERCISES.keys()
         }
 
         # Track number of users per test for each region
         users_per_test = {
-            region: {f'Test {i}': 0 for i in range(1, 4)}  # Explicitly use 3 tests
+            region: {f'Test {i}': 0 for i in range(1, max_tests + 1)}
             for region in VALID_EXERCISES.keys()
         }
 
@@ -506,7 +454,7 @@ class MatrixGenerator:
                 if len(power_dev.columns) >= 2:
                     # Process each body region
                     for region, exercises in VALID_EXERCISES.items():
-                        for test_col in power_dev.columns[:3]:  # Limit to first 3 tests
+                        for test_col in power_dev.columns:
                             # Get relevant exercises for this region (including dominance variations)
                             region_exercises = []
                             for exercise in exercises:
@@ -535,65 +483,3 @@ class MatrixGenerator:
                     body_region_averages[region][test] = np.nan
 
         return body_region_averages
-    
-    def calculate_exercise_averages_by_region(self, df, max_tests=3):
-        """Calculate exercise-level averages grouped by body region for multi-test users."""
-        # Initialize results dictionary
-        exercise_averages = {}
-
-        for region, exercises in VALID_EXERCISES.items():
-            # Create DataFrame for this region's exercises
-            region_data = {}
-
-            for exercise in exercises:
-                # Initialize empty data for this exercise
-                exercise_data = pd.DataFrame(
-                    0,
-                    index=['Power Average', 'Acceleration Average'],
-                    columns=[f'Test {i}' for i in range(1, 4)]  # Use exactly 3 tests
-                )
-                region_data[exercise] = {
-                    'data': exercise_data,
-                    'users': {f'Test {i}': 0 for i in range(1, 4)}
-                }
-
-            exercise_averages[region] = region_data
-
-        # Process each user
-        for user in df['user name'].unique():
-            matrices = self.generate_user_matrices(df, user)
-            if matrices[2] is not None:  # If development matrices exist
-                power_dev, accel_dev = matrices[2], matrices[3]
-
-                # Only process multi-test users
-                if len(power_dev.columns) >= 2:
-                    for region, exercises in VALID_EXERCISES.items():
-                        for exercise in exercises:
-                            # Find all variations of this exercise (including dominance)
-                            exercise_variations = [ex for ex in power_dev.index if exercise in ex]
-
-                            for test_num in range(1, 4):
-                                test_col = f'Test {test_num}'
-                                if test_col in power_dev.columns:
-                                    # Get scores for all variations of this exercise
-                                    power_scores = power_dev.loc[exercise_variations, test_col].dropna()
-                                    accel_scores = accel_dev.loc[exercise_variations, test_col].dropna()
-
-                                    if not power_scores.empty or not accel_scores.empty:
-                                        if not power_scores.empty:
-                                            exercise_averages[region][exercise]['data'].loc['Power Average', test_col] += power_scores.mean()
-                                        if not accel_scores.empty:
-                                            exercise_averages[region][exercise]['data'].loc['Acceleration Average', test_col] += accel_scores.mean()
-                                        exercise_averages[region][exercise]['users'][test_col] += 1
-
-        # Calculate final averages
-        for region in VALID_EXERCISES.keys():
-            for exercise in VALID_EXERCISES[region]:
-                for test in [f'Test {i}' for i in range(1, 4)]:
-                    n_users = exercise_averages[region][exercise]['users'][test]
-                    if n_users > 0:
-                        exercise_averages[region][exercise]['data'][test] /= n_users
-                    else:
-                        exercise_averages[region][exercise]['data'][test] = np.nan
-
-        return exercise_averages

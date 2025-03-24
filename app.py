@@ -22,11 +22,11 @@ def main():
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
-                                    type=['csv', 'xlsx'])
+                                      type=['csv', 'xlsx'])
 
     if uploaded_file is not None:
         try:
-            # Load data
+            # Load and validate data
             if uploaded_file.name.endswith('.csv'):
                 df = pd.read_csv(uploaded_file)
             else:
@@ -39,28 +39,20 @@ def main():
                 st.error(message)
                 return
 
-            # Add date constraint toggle
-            enable_date_constraints = st.checkbox(
-                "Enable Date Range Constraints",
-                help="When enabled, enforces 50-120 day gaps between consecutive test instances"
-            )
-
-            # Process data with or without date constraints
-            processed_df = data_processor.preprocess_data(df, enable_date_constraints)
+            # Process data
+            processed_df = data_processor.preprocess_data(df)
 
             # Show data preview in collapsed expander
             with st.expander("Data Preview", expanded=False):
                 st.dataframe(processed_df.head())
 
-            # Generate group-level analysis with date constraints
+            # Generate group-level analysis
             (power_counts, accel_counts, single_test_distribution,
              power_transitions_detail, accel_transitions_detail,
              power_average, accel_average,
              avg_power_change_1_2, avg_accel_change_1_2,
-             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(
-                 processed_df, 
-                 apply_date_constraints=enable_date_constraints
-             )
+             avg_power_change_2_3, avg_accel_change_2_3) = matrix_generator.generate_group_analysis(processed_df)
+
             # Display group-level analysis
             st.subheader("Group Development Analysis")
 
@@ -88,10 +80,10 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
-                           delta_color="normal")
+                         delta_color="normal")
             with col2:
                 st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
-                           delta_color="normal")
+                         delta_color="normal")
 
             # Display Acceleration development distribution and changes
             st.write("Multi-Test Users Acceleration Development Distribution")
@@ -102,10 +94,10 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
-                           delta_color="normal")
+                         delta_color="normal")
             with col2:
                 st.metric("Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
-                           delta_color="normal")
+                         delta_color="normal")
 
             # Display detailed transition analysis
             st.subheader("Detailed Transition Analysis")
@@ -138,7 +130,7 @@ def main():
             st.write("Group averages by body region for multi-test users")
 
             # Calculate body region averages
-            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df, max_tests=3)
+            body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
 
             # Create columns for each body region
             region_cols = st.columns(len(VALID_EXERCISES))
@@ -149,39 +141,6 @@ def main():
                     st.write(f"**{region}**")
                     styled_averages = averages.style.format("{:.1f}%")
                     st.dataframe(styled_averages)
-
-            # Display detailed exercise averages by region
-            st.write("### Detailed Exercise Averages by Body Region")
-            st.write("Group averages for individual exercises")
-
-            # Calculate exercise-level averages
-            exercise_averages = matrix_generator.calculate_exercise_averages_by_region(processed_df, max_tests=3)
-
-            # Display each region's exercise data
-            for region in VALID_EXERCISES.keys():
-                st.write(f"#### {region}")
-
-                # Combine all exercises in this region into a single DataFrame
-                region_exercises = VALID_EXERCISES[region]
-                combined_data = []
-
-                for exercise in region_exercises:
-                    exercise_data = exercise_averages[region][exercise]['data']
-                    # Add exercise name as index prefix
-                    exercise_rows = []
-                    for metric in ['Power Average', 'Acceleration Average']:
-                        row_data = exercise_data.loc[metric].to_dict()
-                        row_data['Exercise'] = exercise
-                        row_data['Metric'] = metric
-                        exercise_rows.append(row_data)
-                    combined_data.extend(exercise_rows)
-
-                # Create and style DataFrame
-                if combined_data:
-                    df_region = pd.DataFrame(combined_data)
-                    df_region = df_region.set_index(['Exercise', 'Metric'])
-                    styled_df = df_region.style.format("{:.1f}%")
-                    st.dataframe(styled_df, use_container_width=True)
 
 
             # User selection for individual analysis
