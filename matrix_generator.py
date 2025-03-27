@@ -517,3 +517,104 @@ class MatrixGenerator:
                     body_region_averages[region][test] = np.nan
 
         return body_region_averages
+        
+    def get_torso_region_metrics(self, df, max_tests=4):
+        """
+        Calculate detailed power and acceleration metrics for the Torso region exercises.
+        Only includes multi-test users with separate metrics for power and acceleration.
+        """
+        # Import constants
+        from exercise_constants import VALID_EXERCISES
+        
+        # Get torso exercises
+        torso_exercises = VALID_EXERCISES.get('Torso', [])
+        
+        # Get all exercise variations including dominance
+        variations = []
+        for exercise in torso_exercises:
+            # Include base exercises and variations with dominance
+            matching = [ex for ex in self.exercises if exercise in ex]
+            variations.extend(matching)
+            
+        # Get users with multiple tests
+        multi_test_users = []
+        for user in df['user name'].unique():
+            user_data = df[df['user name'] == user]
+            if user_data['test number'].nunique() >= 2:
+                multi_test_users.append(user)
+                
+        if not multi_test_users:
+            return None, None  # Return None if no multi-test users
+
+        # Initialize DataFrames for power and acceleration
+        power_df = pd.DataFrame(
+            0.0,
+            index=variations,
+            columns=['Test 1', 'Test 2', 'Test 3', 'Test 4'][:max_tests]
+        )
+        
+        accel_df = pd.DataFrame(
+            0.0,
+            index=variations,
+            columns=['Test 1', 'Test 2', 'Test 3', 'Test 4'][:max_tests]
+        )
+
+        # Track user counts for each cell
+        power_count_df = pd.DataFrame(
+            0,
+            index=variations,
+            columns=['Test 1', 'Test 2', 'Test 3', 'Test 4'][:max_tests]
+        )
+        
+        accel_count_df = pd.DataFrame(
+            0,
+            index=variations,
+            columns=['Test 1', 'Test 2', 'Test 3', 'Test 4'][:max_tests]
+        )
+
+        # Process each user
+        for user in multi_test_users:
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user)
+            if matrices[2] is not None:  # If development matrices exist
+                power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
+                
+                # Only process multi-test users
+                if len(power_dev.columns) >= 2:
+                    # Only process up to max_tests columns
+                    test_cols = [col for col in power_dev.columns if int(col.split()[-1]) <= max_tests]
+                    
+                    for test_col in test_cols:
+                        # Get power and acceleration values for torso exercises
+                        for exercise in variations:
+                            if exercise in power_dev.index:
+                                # Get power development score
+                                power_value = power_dev.loc[exercise, test_col]
+                                if pd.notna(power_value):
+                                    power_df.loc[exercise, test_col] += power_value
+                                    power_count_df.loc[exercise, test_col] += 1
+                                
+                                # Get acceleration development score
+                                accel_value = accel_dev.loc[exercise, test_col]
+                                if pd.notna(accel_value):
+                                    accel_df.loc[exercise, test_col] += accel_value
+                                    accel_count_df.loc[exercise, test_col] += 1
+
+        # Calculate averages for each cell
+        for col in power_df.columns:
+            for idx in power_df.index:
+                # Power averages
+                count = power_count_df.loc[idx, col]
+                if count > 0:
+                    power_df.loc[idx, col] = power_df.loc[idx, col] / count
+                else:
+                    power_df.loc[idx, col] = np.nan
+                    
+                # Acceleration averages
+                count = accel_count_df.loc[idx, col]
+                if count > 0:
+                    accel_df.loc[idx, col] = accel_df.loc[idx, col] / count
+                else:
+                    accel_df.loc[idx, col] = np.nan
+
+        return power_df, accel_df

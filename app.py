@@ -147,6 +147,29 @@ def main():
                     st.write(f"**{region}**")
                     styled_averages = averages.style.format("{:.1f}%")
                     st.dataframe(styled_averages)
+            
+            # Detailed Torso Region Analysis
+            st.markdown("<h3 style='font-size: 1.5em;'>Detailed Torso Region Analysis</h3>", unsafe_allow_html=True)
+            st.write("Separate power and acceleration metrics for torso region movements (multi-test users only)")
+            
+            # Get detailed torso region metrics
+            torso_power_df, torso_accel_df = matrix_generator.get_torso_region_metrics(processed_df)
+            
+            if torso_power_df is not None and torso_accel_df is not None:
+                # Create two columns for power and acceleration
+                torso_col1, torso_col2 = st.columns(2)
+                
+                with torso_col1:
+                    st.write("**Torso Region Power Development (%)**")
+                    styled_power = torso_power_df.style.format("{:.1f}%")
+                    st.dataframe(styled_power)
+                
+                with torso_col2:
+                    st.write("**Torso Region Acceleration Development (%)**")
+                    styled_accel = torso_accel_df.style.format("{:.1f}%")
+                    st.dataframe(styled_accel)
+            else:
+                st.info("Not enough multi-test user data to display detailed torso region analysis.")
 
 
             # User selection for individual analysis
