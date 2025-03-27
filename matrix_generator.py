@@ -617,8 +617,35 @@ class MatrixGenerator:
             matching = [ex for ex in self.exercises if exercise in ex]
             variations.extend(matching)
         
-        print(f"Debug: Exercise variations for {region_name}: {variations}")
+        # Special handling for Press/Pull exercises - make sure all variants are included
+        if region_name == 'Press/Pull':
+            print(f"Debug: ALL_EXERCISES list: {self.exercises}")
+            press_pull_exercises = [
+                'Horizontal Row (One Hand) (Dominant)', 
+                'Horizontal Row (One Hand) (Non-Dominant)',
+                'Chest Press (One Hand) (Dominant)',
+                'Chest Press (One Hand) (Non-Dominant)'
+            ]
             
+            # Ensure all Press/Pull exercises are in the variations list
+            for ex in press_pull_exercises:
+                if ex not in variations and ex in self.exercises:
+                    variations.append(ex)
+                    print(f"Debug: Added missing Press/Pull exercise to variations: {ex}")
+        
+        print(f"Debug: Exercise variations for {region_name}: {variations}")
+        
+        # Explicitly check the data for Press/Pull exercises
+        if region_name == 'Press/Pull':
+            press_pull_data = df[df['full_exercise_name'].str.contains('Horizontal Row|Chest Press', na=False)]
+            if not press_pull_data.empty:
+                print(f"Debug: Found {len(press_pull_data)} Press/Pull exercise entries in dataset")
+                sample = press_pull_data.head(5)
+                for _, row in sample.iterrows():
+                    print(f"Debug: Sample data - User: {row['user name']}, Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
+            else:
+                print("Debug: No Press/Pull exercise data found in dataset!")
+        
         # Get users with multiple tests
         multi_test_users = []
         for user in df['user name'].unique():
@@ -626,6 +653,13 @@ class MatrixGenerator:
             matrices = self.generate_user_matrices(df, user)
             if matrices[2] is not None:  # If development matrices exist
                 power_dev = matrices[2]  # Get power development matrix
+                
+                # For Press/Pull region, check if the user has Press/Pull exercises specifically
+                if region_name == 'Press/Pull':
+                    user_has_press_pull = any(ex in power_dev.index for ex in variations)
+                    if user_has_press_pull:
+                        print(f"Debug: User {user} has Press/Pull exercises")
+                    
                 # Check if user has multiple tests
                 if len(power_dev.columns) >= 2:
                     multi_test_users.append(user)
