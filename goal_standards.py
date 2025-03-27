@@ -28,6 +28,16 @@ POWER_STANDARDS = {
     }
 }
 
+# Add alternate keys for Press/Pull exercises to support various formats
+for sex in ['male', 'female']:
+    # Ensure variations for Horizontal Row
+    if 'Horizontal Row (One Hand)' in POWER_STANDARDS[sex]:
+        POWER_STANDARDS[sex]['Horizontal Row'] = POWER_STANDARDS[sex]['Horizontal Row (One Hand)']
+    
+    # Ensure variations for Chest Press
+    if 'Chest Press (One Hand)' in POWER_STANDARDS[sex]:
+        POWER_STANDARDS[sex]['Chest Press'] = POWER_STANDARDS[sex]['Chest Press (One Hand)']
+
 ACCELERATION_STANDARDS = {
     'male': {
         'Straight Arm Trunk Rotation': 15,
@@ -55,10 +65,42 @@ ACCELERATION_STANDARDS = {
     }
 }
 
+# Add alternate keys for Press/Pull exercises to support various formats
+for sex in ['male', 'female']:
+    # Ensure variations for Horizontal Row
+    if 'Horizontal Row (One Hand)' in ACCELERATION_STANDARDS[sex]:
+        ACCELERATION_STANDARDS[sex]['Horizontal Row'] = ACCELERATION_STANDARDS[sex]['Horizontal Row (One Hand)']
+    
+    # Ensure variations for Chest Press
+    if 'Chest Press (One Hand)' in ACCELERATION_STANDARDS[sex]:
+        ACCELERATION_STANDARDS[sex]['Chest Press'] = ACCELERATION_STANDARDS[sex]['Chest Press (One Hand)']
+
 def get_base_exercise_name(full_exercise_name):
     """Extract base exercise name from full name including dominance."""
+    # Debug output for Press/Pull exercises
+    if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
+        print(f"Debug: Extracting base name from '{full_exercise_name}'")
+    
+    # Handle exercises with "One Hand" in the name differently
+    if 'One Hand' in full_exercise_name and '(' in full_exercise_name:
+        # For exercises like "Horizontal Row (One Hand) (Dominant)"
+        # We want to return "Horizontal Row (One Hand)" as the base name
+        if full_exercise_name.count('(') > 1:
+            base = full_exercise_name.rsplit('(', 1)[0].strip()
+            if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
+                print(f"Debug: Multiple parens found, returning '{base}'")
+            return base
+    
+    # Standard case for exercises without "One Hand" in base name
     if '(' in full_exercise_name:
-        return full_exercise_name.split('(')[0].strip()
+        base = full_exercise_name.split('(')[0].strip()
+        if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
+            print(f"Debug: Standard case, returning '{base}'")
+        return base
+        
+    # No parens, return as is
+    if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
+        print(f"Debug: No parens found, returning full name")
     return full_exercise_name
 
 def calculate_development_score(value, exercise_name, sex, metric_type='power'):
