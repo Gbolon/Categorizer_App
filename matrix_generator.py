@@ -267,10 +267,19 @@ class MatrixGenerator:
             styled_matrix = (matrix.style
                            .format("{:.0f}")
                            .apply(highlight_cells, axis=None)
-                           .set_table_styles([{
-                               'selector': 'th.col_heading',
-                               'props': [('text-align', 'center')]
-                           }]))
+                           .set_table_styles([
+                               {
+                                   'selector': 'th.col_heading.level0',
+                                   'props': [('text-align', 'center'), 
+                                            ('font-weight', 'bold'),
+                                            ('background-color', '#f0f0f0'),
+                                            ('color', '#333333')]
+                               },
+                               {
+                                   'selector': 'th.col_heading.level1',
+                                   'props': [('text-align', 'center')]
+                               }
+                           ]))
 
             transition_matrices[period] = styled_matrix
 

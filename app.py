@@ -81,7 +81,7 @@ def main():
             styled_power_counts = power_counts.style.format("{:.0f}")
             st.dataframe(styled_power_counts, use_container_width=True)
 
-            # Display Power changes in columns
+            # Display Power changes directly below power distribution
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
@@ -90,12 +90,12 @@ def main():
                 st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
                          delta_color="normal")
 
-            # Display Acceleration development distribution and changes
+            # Display Acceleration development distribution
             st.write("Multi-Test Users Acceleration Development Distribution")
             styled_accel_counts = accel_counts.style.format("{:.0f}")
             st.dataframe(styled_accel_counts, use_container_width=True)
 
-            # Display Acceleration changes in columns
+            # Display Acceleration changes directly below acceleration distribution
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
@@ -146,6 +146,88 @@ def main():
                     st.write(f"**{region}**")
                     styled_averages = averages.style.format("{:.1f}%")
                     st.dataframe(styled_averages)
+            
+            # Body Region Development Meta Analysis
+            st.markdown("<h2 style='font-size: 1.875em;'>Body Region Development Meta Analysis</h2>", unsafe_allow_html=True)
+            st.write("Average development scores by body region from user development matrices")
+            
+            # Get user list with multiple tests
+            multi_test_users = []
+            for user in processed_df['user name'].unique():
+                matrices = matrix_generator.generate_user_matrices(processed_df, user)
+                if matrices[2] is not None and len(matrices[2].columns) >= 2:  # Power development matrix with 2+ tests
+                    multi_test_users.append(user)
+            
+            # Initialize data structure to store development scores by body region
+            region_dev_data = {
+                region: {
+                    'Power': {f'Test {i}': [] for i in range(1, 4)},
+                    'Acceleration': {f'Test {i}': [] for i in range(1, 4)}
+                } for region in VALID_EXERCISES.keys()
+            }
+            
+            # Process each multi-test user
+            for user in multi_test_users:
+                # Get user's matrices
+                matrices = matrix_generator.generate_user_matrices(processed_df, user)
+                power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
+                
+                # Process up to 3 tests
+                test_columns = [col for col in power_dev.columns if col in ['Test 1', 'Test 2', 'Test 3']]
+                
+                # Process each body region
+                for region, exercises in VALID_EXERCISES.items():
+                    # Get exercises for this region (including dominance variations)
+                    region_exercises = []
+                    for exercise in exercises:
+                        matching_exercises = [ex for ex in power_dev.index if exercise in ex]
+                        region_exercises.extend(matching_exercises)
+                    
+                    # Calculate and store averages for each test
+                    for test_col in test_columns:
+                        # Power scores
+                        power_scores = power_dev.loc[region_exercises, test_col].dropna()
+                        if not power_scores.empty:
+                            power_mean = power_scores.mean()
+                            if pd.notna(power_mean):
+                                region_dev_data[region]['Power'][test_col].append(power_mean)
+                        
+                        # Acceleration scores
+                        accel_scores = accel_dev.loc[region_exercises, test_col].dropna()
+                        if not accel_scores.empty:
+                            accel_mean = accel_scores.mean()
+                            if pd.notna(accel_mean):
+                                region_dev_data[region]['Acceleration'][test_col].append(accel_mean)
+            
+            # Create summary tables for each region
+            for region in VALID_EXERCISES.keys():
+                st.subheader(f"{region} Region Development")
+                
+                # Create DataFrame for this region
+                data = {
+                    'Metric': ['Power', 'Power', 'Power', 'Acceleration', 'Acceleration', 'Acceleration'],
+                    'Test': ['Test 1', 'Test 2', 'Test 3', 'Test 1', 'Test 2', 'Test 3'],
+                    'Average': [np.nan] * 6,
+                    'Users': [0] * 6
+                }
+                
+                # Fill in averages and user counts
+                for i, (metric, test) in enumerate(zip(
+                    ['Power', 'Power', 'Power', 'Acceleration', 'Acceleration', 'Acceleration'],
+                    ['Test 1', 'Test 2', 'Test 3', 'Test 1', 'Test 2', 'Test 3']
+                )):
+                    values = region_dev_data[region][metric][test]
+                    data['Users'][i] = len(values)
+                    if values:
+                        data['Average'][i] = np.mean(values)
+                
+                # Create DataFrame and display
+                df_region = pd.DataFrame(data)
+                styled_df = df_region.style.format({
+                    'Average': '{:.1f}%',
+                    'Users': '{:.0f}'
+                })
+                st.dataframe(styled_df)
 
 
             # User selection for individual analysis
