@@ -559,9 +559,15 @@ class MatrixGenerator:
         """
         Calculate detailed power and acceleration metrics for the Torso region exercises.
         Only includes multi-test users with separate metrics for power and acceleration.
+        Returns:
+            - power_df: DataFrame with power metrics
+            - accel_df: DataFrame with acceleration metrics
+            - power_changes: Dictionary with power change metrics
+            - accel_changes: Dictionary with acceleration change metrics
         """
         # Import constants
         from exercise_constants import VALID_EXERCISES
+        import numpy as np
         
         # Get torso exercises
         torso_exercises = VALID_EXERCISES.get('Torso', [])
@@ -657,9 +663,36 @@ class MatrixGenerator:
                     accel_df.loc[idx, col] = accel_df.loc[idx, col] / count
                 else:
                     accel_df.loc[idx, col] = np.nan
-
-        # Calculate change metrics
-        power_changes = self.calculate_test_changes(power_df)
-        accel_changes = self.calculate_test_changes(accel_df)
         
+        # Calculate change metrics for power
+        power_changes = self.calculate_test_changes(power_df)
+        
+        # Calculate change metrics for acceleration
+        accel_changes = self.calculate_test_changes(accel_df)
+
         return power_df, accel_df, power_changes, accel_changes
+        
+    def get_sports_data_from_web(self, url):
+        """
+        Fetches sports-related content from a given URL using trafilatura.
+        
+        Args:
+            url (str): The URL to scrape data from
+            
+        Returns:
+            str: The extracted text content from the webpage
+        """
+        try:
+            import trafilatura
+            # Fetch content from the URL
+            downloaded = trafilatura.fetch_url(url)
+            if downloaded:
+                # Extract main text content
+                text = trafilatura.extract(downloaded)
+                return text
+            else:
+                return "Could not download content from the provided URL."
+        except ImportError:
+            return "Trafilatura package is not installed. Please install it using 'pip install trafilatura'."
+        except Exception as e:
+            return f"Error fetching data: {str(e)}"

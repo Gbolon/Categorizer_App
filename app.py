@@ -14,7 +14,50 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
+def web_data_page():
+    st.markdown("<h1 style='font-size: 3em;'>Sports Data Web Scraper</h1>", unsafe_allow_html=True)
+    
+    # Initialize matrix generator (contains the web scraping function)
+    matrix_generator = MatrixGenerator()
+    
+    st.write("This tool allows you to fetch and extract text content from sports-related websites.")
+    st.write("Enter a URL below to scrape content:")
+    
+    # Input for URL
+    url = st.text_input("Website URL", "https://www.mlb.com/scores/2025-03-27")
+    
+    if st.button("Fetch Data"):
+        with st.spinner("Fetching data from website..."):
+            # Get web content
+            content = matrix_generator.get_sports_data_from_web(url)
+            
+            if content:
+                st.success("Data successfully fetched!")
+                
+                # Show the extracted content
+                st.subheader("Extracted Content")
+                st.text_area("Content", content, height=500)
+                
+                # Option to download the content
+                st.download_button(
+                    label="Download as Text File",
+                    data=content,
+                    file_name="scraped_content.txt",
+                    mime="text/plain"
+                )
+            else:
+                st.error("Failed to fetch data from the provided URL.")
+
 def main():
+    # Add page navigation
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Select a page:", ["Matrix Analysis", "Web Data Scraper"])
+    
+    if page == "Web Data Scraper":
+        web_data_page()
+        return
+    
+    # Original Matrix Analysis page
     st.markdown("<h1 style='font-size: 3em;'>Site Development Bracketer</h1>", unsafe_allow_html=True)
 
     # Initialize processors
