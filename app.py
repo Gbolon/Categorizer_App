@@ -161,13 +161,8 @@ def main():
                     st.markdown(f"<h3 style='font-size: 1.5em;'>{region} Region Analysis</h3>", unsafe_allow_html=True)
                     st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
                     
-                    # Get detailed region metrics
-                    if region == 'Torso':
-                        # Use existing function for Torso region
-                        power_df, accel_df, power_changes, accel_changes = matrix_generator.get_torso_region_metrics(processed_df)
-                    else:
-                        # Use general function for other regions
-                        power_df, accel_df, power_changes, accel_changes = matrix_generator.get_region_metrics(processed_df, region)
+                    # Get detailed region metrics using the generalized function for all regions
+                    power_df, accel_df, power_changes, accel_changes = matrix_generator.get_region_metrics(processed_df, region)
             
                     if power_df is not None and accel_df is not None:
                         # Create two columns for power and acceleration
