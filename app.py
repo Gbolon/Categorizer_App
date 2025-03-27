@@ -153,7 +153,7 @@ def main():
             st.write("Separate power and acceleration metrics for torso region movements (multi-test users only)")
             
             # Get detailed torso region metrics
-            torso_power_df, torso_accel_df = matrix_generator.get_torso_region_metrics(processed_df)
+            torso_power_df, torso_accel_df, power_changes, accel_changes = matrix_generator.get_torso_region_metrics(processed_df)
             
             if torso_power_df is not None and torso_accel_df is not None:
                 # Create two columns for power and acceleration
@@ -163,48 +163,61 @@ def main():
                     st.write("**Torso Region Power Development (%)**")
                     styled_power = torso_power_df.style.format("{:.1f}%")
                     st.dataframe(styled_power)
+                    
+                    # Display power changes if available
+                    if power_changes:
+                        st.write("**Average Changes in Power Development:**")
+                        metrics_col1, metrics_col2 = st.columns(2)
+                        
+                        # Test 1 to Test 2 changes
+                        if 'test1_to_test2_pct' in power_changes and not pd.isna(power_changes['test1_to_test2_pct']):
+                            change = power_changes['test1_to_test2_pct']
+                            with metrics_col1:
+                                st.metric(
+                                    "Test 1 → Test 2", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
+                        
+                        # Test 2 to Test 3 changes
+                        if 'test2_to_test3_pct' in power_changes and not pd.isna(power_changes['test2_to_test3_pct']):
+                            change = power_changes['test2_to_test3_pct']
+                            with metrics_col2:
+                                st.metric(
+                                    "Test 2 → Test 3", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
                 
                 with torso_col2:
                     st.write("**Torso Region Acceleration Development (%)**")
                     styled_accel = torso_accel_df.style.format("{:.1f}%")
                     st.dataframe(styled_accel)
-                
-                # Get test-to-test changes for torso region
-                st.markdown("<h4 style='font-size: 1.2em;'>Test-to-Test Changes</h4>", unsafe_allow_html=True)
-                st.write("Average change in development scores between consecutive tests")
-                
-                power_changes_df, accel_changes_df = matrix_generator.calculate_torso_test_changes(processed_df)
-                
-                # Create two columns for power and acceleration changes
-                changes_col1, changes_col2 = st.columns(2)
-                
-                with changes_col1:
-                    st.write("**Power Development Changes**")
-                    # Format the changes dataframe
-                    styled_power_changes = power_changes_df.style.format({
-                        'Average Change': '{:+.1f}%',  # Include + sign for positive values
-                        'Number of Data Points': '{:.0f}'
-                    }).background_gradient(
-                        cmap='RdYlGn',  # Red to Yellow to Green
-                        subset=['Average Change'],
-                        vmin=-10,
-                        vmax=10
-                    )
-                    st.dataframe(styled_power_changes)
-                
-                with changes_col2:
-                    st.write("**Acceleration Development Changes**")
-                    # Format the changes dataframe
-                    styled_accel_changes = accel_changes_df.style.format({
-                        'Average Change': '{:+.1f}%',  # Include + sign for positive values
-                        'Number of Data Points': '{:.0f}'
-                    }).background_gradient(
-                        cmap='RdYlGn',  # Red to Yellow to Green
-                        subset=['Average Change'],
-                        vmin=-10,
-                        vmax=10
-                    )
-                    st.dataframe(styled_accel_changes)
+                    
+                    # Display acceleration changes if available
+                    if accel_changes:
+                        st.write("**Average Changes in Acceleration Development:**")
+                        metrics_col1, metrics_col2 = st.columns(2)
+                        
+                        # Test 1 to Test 2 changes
+                        if 'test1_to_test2_pct' in accel_changes and not pd.isna(accel_changes['test1_to_test2_pct']):
+                            change = accel_changes['test1_to_test2_pct']
+                            with metrics_col1:
+                                st.metric(
+                                    "Test 1 → Test 2", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
+                        
+                        # Test 2 to Test 3 changes
+                        if 'test2_to_test3_pct' in accel_changes and not pd.isna(accel_changes['test2_to_test3_pct']):
+                            change = accel_changes['test2_to_test3_pct']
+                            with metrics_col2:
+                                st.metric(
+                                    "Test 2 → Test 3", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
             else:
                 st.info("Not enough multi-test user data to display detailed torso region analysis.")
 

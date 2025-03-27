@@ -658,8 +658,4 @@ class MatrixGenerator:
                 else:
                     accel_df.loc[idx, col] = np.nan
 
-        # Calculate change metrics
-        power_changes = self.calculate_test_changes(power_df)
-        accel_changes = self.calculate_test_changes(accel_df)
-        
-        return power_df, accel_df, power_changes, accel_changes
+        return power_df, accel_df
