@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from exercise_constants import VALID_EXERCISES
