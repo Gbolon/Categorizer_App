@@ -389,11 +389,7 @@ class MatrixGenerator:
         accel_df = accel_df.reindex(self.exercises)
         accel_df.columns = [f"Test {i}" for i in range(1, len(accel_df.columns) + 1)]
 
-        # Calculate change metrics
-        power_changes = self.calculate_test_changes(power_df)
-        accel_changes = self.calculate_test_changes(accel_df)
-        
-        return power_df, accel_df, power_changes, accel_changes
+        return power_df, accel_df
 
     def _calculate_development_matrix(self, metric_df, sex, metric_type):
         """Calculate development scores for each value in the matrix."""
@@ -522,39 +518,6 @@ class MatrixGenerator:
 
         return body_region_averages
         
-    def calculate_test_changes(self, data_df):
-        """
-        Calculate average changes between tests for the provided DataFrame.
-        Returns a dictionary with change metrics.
-        """
-        changes = {}
-        
-        # Calculate Test 1 to Test 2 changes
-        if 'Test 1' in data_df.columns and 'Test 2' in data_df.columns:
-            # Get valid rows (non-NaN in both columns)
-            valid_rows = data_df[data_df['Test 1'].notna() & data_df['Test 2'].notna()]
-            if not valid_rows.empty:
-                # Calculate changes
-                changes['test1_to_test2'] = (valid_rows['Test 2'] - valid_rows['Test 1']).mean()
-                changes['test1_to_test2_pct'] = ((valid_rows['Test 2'] - valid_rows['Test 1']) / valid_rows['Test 1'] * 100).mean()
-            else:
-                changes['test1_to_test2'] = np.nan
-                changes['test1_to_test2_pct'] = np.nan
-        
-        # Calculate Test 2 to Test 3 changes
-        if 'Test 2' in data_df.columns and 'Test 3' in data_df.columns:
-            # Get valid rows (non-NaN in both columns)
-            valid_rows = data_df[data_df['Test 2'].notna() & data_df['Test 3'].notna()]
-            if not valid_rows.empty:
-                # Calculate changes
-                changes['test2_to_test3'] = (valid_rows['Test 3'] - valid_rows['Test 2']).mean()
-                changes['test2_to_test3_pct'] = ((valid_rows['Test 3'] - valid_rows['Test 2']) / valid_rows['Test 2'] * 100).mean()
-            else:
-                changes['test2_to_test3'] = np.nan
-                changes['test2_to_test3_pct'] = np.nan
-        
-        return changes
-            
     def get_torso_region_metrics(self, df, max_tests=4):
         """
         Calculate detailed power and acceleration metrics for the Torso region exercises.
@@ -585,7 +548,7 @@ class MatrixGenerator:
                     multi_test_users.append(user)
                 
         if not multi_test_users:
-            return None, None, None, None  # Return None if no multi-test users (added Nones for change metrics)
+            return None, None  # Return None if no multi-test users
 
         # Initialize DataFrames for power and acceleration
         power_df = pd.DataFrame(
@@ -658,8 +621,4 @@ class MatrixGenerator:
                 else:
                     accel_df.loc[idx, col] = np.nan
 
-        # Calculate change metrics
-        power_changes = self.calculate_test_changes(power_df)
-        accel_changes = self.calculate_test_changes(accel_df)
-        
-        return power_df, accel_df, power_changes, accel_changes
+        return power_df, accel_df
