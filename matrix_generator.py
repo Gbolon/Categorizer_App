@@ -555,20 +555,31 @@ class MatrixGenerator:
         
         return changes
             
-    def get_torso_region_metrics(self, df, max_tests=4):
+    def get_region_metrics(self, df, region_name, max_tests=4):
         """
-        Calculate detailed power and acceleration metrics for the Torso region exercises.
+        Calculate detailed power and acceleration metrics for the specified body region exercises.
         Only includes multi-test users with separate metrics for power and acceleration.
+        
+        Args:
+            df: The processed dataframe
+            region_name: The name of the body region (e.g., 'Torso', 'Arms', etc.)
+            max_tests: Maximum number of tests to include
+            
+        Returns:
+            power_df, accel_df, power_changes, accel_changes: DataFrames and change dictionaries
         """
         # Import constants
         from exercise_constants import VALID_EXERCISES
         
-        # Get torso exercises
-        torso_exercises = VALID_EXERCISES.get('Torso', [])
+        # Get region exercises
+        region_exercises = VALID_EXERCISES.get(region_name, [])
+        
+        if not region_exercises:
+            return None, None, None, None  # Return None if region not found
         
         # Get all exercise variations including dominance
         variations = []
-        for exercise in torso_exercises:
+        for exercise in region_exercises:
             # Include base exercises and variations with dominance
             matching = [ex for ex in self.exercises if exercise in ex]
             variations.extend(matching)
@@ -585,7 +596,7 @@ class MatrixGenerator:
                     multi_test_users.append(user)
                 
         if not multi_test_users:
-            return None, None, None, None  # Return None if no multi-test users (added Nones for change metrics)
+            return None, None, None, None  # Return None if no multi-test users
 
         # Initialize DataFrames for power and acceleration
         power_df = pd.DataFrame(
@@ -626,7 +637,7 @@ class MatrixGenerator:
                     test_cols = [col for col in power_dev.columns if int(col.split()[-1]) <= max_tests]
                     
                     for test_col in test_cols:
-                        # Get power and acceleration values for torso exercises
+                        # Get power and acceleration values for region exercises
                         for exercise in variations:
                             if exercise in power_dev.index:
                                 # Get power development score
@@ -663,3 +674,10 @@ class MatrixGenerator:
         accel_changes = self.calculate_test_changes(accel_df)
         
         return power_df, accel_df, power_changes, accel_changes
+            
+    def get_torso_region_metrics(self, df, max_tests=4):
+        """
+        Calculate detailed power and acceleration metrics for the Torso region exercises.
+        Only includes multi-test users with separate metrics for power and acceleration.
+        """
+        return self.get_region_metrics(df, 'Torso', max_tests)
