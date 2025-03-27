@@ -362,7 +362,8 @@ class MatrixGenerator:
                     accel_matrix[instance][exercise] = np.nan
 
         # Convert to DataFrames
-        power_df, accel_df = self._convert_to_dataframes(power_matrix, accel_matrix)
+        result = self._convert_to_dataframes(power_matrix, accel_matrix)
+        power_df, accel_df = result
 
         # Generate development matrices if sex is available
         power_dev_df = self._calculate_development_matrix(power_df, user_sex, 'power')
@@ -388,12 +389,8 @@ class MatrixGenerator:
         accel_df = pd.DataFrame(accel_matrix)
         accel_df = accel_df.reindex(self.exercises)
         accel_df.columns = [f"Test {i}" for i in range(1, len(accel_df.columns) + 1)]
-
-        # Calculate change metrics
-        power_changes = self.calculate_test_changes(power_df)
-        accel_changes = self.calculate_test_changes(accel_df)
         
-        return power_df, accel_df, power_changes, accel_changes
+        return power_df, accel_df
 
     def _calculate_development_matrix(self, metric_df, sex, metric_type):
         """Calculate development scores for each value in the matrix."""
