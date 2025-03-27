@@ -539,9 +539,13 @@ class MatrixGenerator:
         # Get users with multiple tests
         multi_test_users = []
         for user in df['user name'].unique():
-            user_data = df[df['user name'] == user]
-            if user_data['test number'].nunique() >= 2:
-                multi_test_users.append(user)
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user)
+            if matrices[2] is not None:  # If development matrices exist
+                power_dev = matrices[2]  # Get power development matrix
+                # Check if user has multiple tests
+                if len(power_dev.columns) >= 2:
+                    multi_test_users.append(user)
                 
         if not multi_test_users:
             return None, None  # Return None if no multi-test users
