@@ -153,7 +153,7 @@ def main():
             st.write("Separate power and acceleration metrics for torso region movements (multi-test users only)")
             
             # Get detailed torso region metrics
-            torso_power_df, torso_accel_df = matrix_generator.get_torso_region_metrics(processed_df)
+            torso_power_df, torso_accel_df, power_changes, accel_changes = matrix_generator.get_torso_region_metrics(processed_df)
             
             if torso_power_df is not None and torso_accel_df is not None:
                 # Create two columns for power and acceleration
@@ -163,11 +163,61 @@ def main():
                     st.write("**Torso Region Power Development (%)**")
                     styled_power = torso_power_df.style.format("{:.1f}%")
                     st.dataframe(styled_power)
+                    
+                    # Display power changes if available
+                    if power_changes:
+                        st.write("**Average Changes in Power Development:**")
+                        metrics_col1, metrics_col2 = st.columns(2)
+                        
+                        # Test 1 to Test 2 changes
+                        if 'test1_to_test2_pct' in power_changes and not pd.isna(power_changes['test1_to_test2_pct']):
+                            change = power_changes['test1_to_test2_pct']
+                            with metrics_col1:
+                                st.metric(
+                                    "Test 1 → Test 2", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
+                        
+                        # Test 2 to Test 3 changes
+                        if 'test2_to_test3_pct' in power_changes and not pd.isna(power_changes['test2_to_test3_pct']):
+                            change = power_changes['test2_to_test3_pct']
+                            with metrics_col2:
+                                st.metric(
+                                    "Test 2 → Test 3", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
                 
                 with torso_col2:
                     st.write("**Torso Region Acceleration Development (%)**")
                     styled_accel = torso_accel_df.style.format("{:.1f}%")
                     st.dataframe(styled_accel)
+                    
+                    # Display acceleration changes if available
+                    if accel_changes:
+                        st.write("**Average Changes in Acceleration Development:**")
+                        metrics_col1, metrics_col2 = st.columns(2)
+                        
+                        # Test 1 to Test 2 changes
+                        if 'test1_to_test2_pct' in accel_changes and not pd.isna(accel_changes['test1_to_test2_pct']):
+                            change = accel_changes['test1_to_test2_pct']
+                            with metrics_col1:
+                                st.metric(
+                                    "Test 1 → Test 2", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
+                        
+                        # Test 2 to Test 3 changes
+                        if 'test2_to_test3_pct' in accel_changes and not pd.isna(accel_changes['test2_to_test3_pct']):
+                            change = accel_changes['test2_to_test3_pct']
+                            with metrics_col2:
+                                st.metric(
+                                    "Test 2 → Test 3", 
+                                    f"{change:.1f}%",
+                                    delta=f"{change:.1f}%"
+                                )
             else:
                 st.info("Not enough multi-test user data to display detailed torso region analysis.")
 
