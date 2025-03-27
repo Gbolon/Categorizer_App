@@ -69,6 +69,19 @@ def calculate_development_score(value, exercise_name, sex, metric_type='power'):
     base_exercise = get_base_exercise_name(exercise_name)
     standards = POWER_STANDARDS if metric_type == 'power' else ACCELERATION_STANDARDS
 
+    # Add debug for Press/Pull exercises
+    if 'Horizontal Row' in exercise_name or 'Chest Press' in exercise_name:
+        print(f"Debug: Calculating dev score for {exercise_name}, base: {base_exercise}, sex: {sex}, type: {metric_type}")
+        print(f"Debug: Value = {value}")
+        if sex not in standards:
+            print(f"Debug: Sex '{sex}' not in standards")
+        elif base_exercise not in standards[sex]:
+            print(f"Debug: Exercise '{base_exercise}' not in standards for {sex}")
+        else:
+            goal_standard = standards[sex][base_exercise]
+            score = (value / goal_standard) * 100
+            print(f"Debug: Goal standard = {goal_standard}, Score = {score}")
+
     if sex not in standards or base_exercise not in standards[sex]:
         return None
 

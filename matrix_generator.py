@@ -329,11 +329,22 @@ class MatrixGenerator:
         if not isinstance(user_sex, str) or user_sex.lower() not in ['male', 'female']:
             return power_matrix, accel_matrix, None, None, None, None, None
 
+        # Debug for Press/Pull exercises
+        press_pull_exercises = user_data[user_data['full_exercise_name'].str.contains('Horizontal Row|Chest Press', na=False)]
+        if not press_pull_exercises.empty:
+            print(f"Debug: User '{user_name}' has {len(press_pull_exercises)} Press/Pull exercises")
+            for _, row in press_pull_exercises.iterrows():
+                print(f"Debug: Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
+
         # Process each exercise chronologically and keep power/acceleration paired
         for _, row in user_data.iterrows():
             exercise = row['full_exercise_name']
             power_value = row['power - high']
             accel_value = row['acceleration - high']
+
+            # Debug Press/Pull exercises
+            if 'Horizontal Row' in exercise or 'Chest Press' in exercise:
+                print(f"Debug: Processing Press/Pull for {user_name} - Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
 
             # Only process if both power and acceleration are present
             if pd.notna(power_value) and pd.notna(accel_value):
@@ -352,6 +363,10 @@ class MatrixGenerator:
                 power_matrix[target_instance][exercise] = power_value
                 accel_matrix[target_instance][exercise] = accel_value
                 test_instances[target_instance].add(exercise)
+                
+                # Debug Press/Pull exercises
+                if 'Horizontal Row' in exercise or 'Chest Press' in exercise:
+                    print(f"Debug: Added to matrices - Test {target_instance}, Exercise: {exercise}, Power: {power_value}, Accel: {accel_value}")
 
         # Fill empty cells with NaN
         for instance in power_matrix:
@@ -396,12 +411,30 @@ class MatrixGenerator:
         """Calculate development scores for each value in the matrix."""
         dev_matrix = metric_df.copy()
 
+        # Debug information for Press/Pull exercises
+        press_pull_rows = [idx for idx in metric_df.index if 'Horizontal Row' in idx or 'Chest Press' in idx]
+        if press_pull_rows:
+            print(f"Debug: Found Press/Pull exercises in matrix for {metric_type}: {press_pull_rows}")
+            for idx in press_pull_rows:
+                for col in metric_df.columns:
+                    print(f"Debug: Pre-calc for {idx}, {col}: Value = {metric_df.loc[idx, col]}")
+
+        # Calculate development scores
         for col in dev_matrix.columns:
             for idx in dev_matrix.index:
                 value = metric_df.loc[idx, col]
-                dev_matrix.loc[idx, col] = calculate_development_score(
-                    value, idx, sex, metric_type
-                )
+                dev_score = calculate_development_score(value, idx, sex, metric_type)
+                
+                # Extra debugging for Press/Pull exercises
+                if 'Horizontal Row' in idx or 'Chest Press' in idx:
+                    print(f"Debug: Development score for {idx}, {col}: Value={value}, Sex={sex}, Type={metric_type}, Score={dev_score}")
+                
+                dev_matrix.loc[idx, col] = dev_score
+
+        # Final debug check
+        for idx in press_pull_rows:
+            for col in dev_matrix.columns:
+                print(f"Debug: Final dev score for {idx}, {col}: {dev_matrix.loc[idx, col]}")
 
         return dev_matrix
 
@@ -572,7 +605,10 @@ class MatrixGenerator:
         region_exercises = VALID_EXERCISES.get(region_name, [])
         
         if not region_exercises:
+            print(f"Debug: No exercises found for region '{region_name}'")
             return None, None, None, None  # Return None if region not found
+        
+        print(f"Debug: Found these exercises for {region_name}: {region_exercises}")
         
         # Get all exercise variations including dominance
         variations = []
@@ -580,6 +616,8 @@ class MatrixGenerator:
             # Include base exercises and variations with dominance
             matching = [ex for ex in self.exercises if exercise in ex]
             variations.extend(matching)
+        
+        print(f"Debug: Exercise variations for {region_name}: {variations}")
             
         # Get users with multiple tests
         multi_test_users = []
@@ -593,7 +631,10 @@ class MatrixGenerator:
                     multi_test_users.append(user)
                 
         if not multi_test_users:
+            print(f"Debug: No multi-test users found for {region_name}")
             return None, None, None, None  # Return None if no multi-test users
+        
+        print(f"Debug: Found {len(multi_test_users)} multi-test users")
 
         # Initialize DataFrames for power and acceleration
         power_df = pd.DataFrame(
