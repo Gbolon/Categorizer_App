@@ -411,37 +411,19 @@ class MatrixGenerator:
         """Calculate development scores for each value in the matrix."""
         dev_matrix = metric_df.copy()
 
-        # Debug information for Press/Pull exercises
-        press_pull_rows = [idx for idx in metric_df.index if 'Horizontal Row' in idx or 'Chest Press' in idx]
-        if press_pull_rows:
-            print(f"Debug: Found Press/Pull exercises in matrix for {metric_type}: {press_pull_rows}")
-            for idx in press_pull_rows:
-                for col in metric_df.columns:
-                    print(f"Debug: Pre-calc for {idx}, {col}: Value = {metric_df.loc[idx, col]}")
-
         # Calculate development scores
         for col in dev_matrix.columns:
             for idx in dev_matrix.index:
                 value = metric_df.loc[idx, col]
                 dev_score = calculate_development_score(value, idx, sex, metric_type)
-                
-                # Extra debugging for Press/Pull exercises
-                if 'Horizontal Row' in idx or 'Chest Press' in idx:
-                    print(f"Debug: Development score for {idx}, {col}: Value={value}, Sex={sex}, Type={metric_type}, Score={dev_score}")
-                
                 dev_matrix.loc[idx, col] = dev_score
-
-        # Final debug check
-        for idx in press_pull_rows:
-            for col in dev_matrix.columns:
-                print(f"Debug: Final dev score for {idx}, {col}: {dev_matrix.loc[idx, col]}")
 
         return dev_matrix
 
     def _calculate_overall_development(self, power_dev_df, accel_dev_df):
         """Calculate overall development categorization for each test instance."""
-        # Initialize a new DataFrame for overall development
-        overall_dev = pd.DataFrame(index=['Power Average', 'Acceleration Average', 'Overall Average'])
+        # Create data structure to store calculated values
+        overall_data = {}
 
         # Calculate averages for each test instance
         for col in power_dev_df.columns:
@@ -454,8 +436,14 @@ class MatrixGenerator:
             # Calculate overall average
             overall_avg = np.mean([power_avg, accel_avg])
 
-            # Add to overall development DataFrame
-            overall_dev[col] = [power_avg, accel_avg, overall_avg]
+            # Store values in dictionary
+            overall_data[col] = [power_avg, accel_avg, overall_avg]
+
+        # Create the DataFrame all at once to avoid fragmentation
+        overall_dev = pd.DataFrame(
+            overall_data,
+            index=['Power Average', 'Acceleration Average', 'Overall Average']
+        )
 
         return overall_dev
 
@@ -605,10 +593,7 @@ class MatrixGenerator:
         region_exercises = VALID_EXERCISES.get(region_name, [])
         
         if not region_exercises:
-            print(f"Debug: No exercises found for region '{region_name}'")
             return None, None, None, None  # Return None if region not found
-        
-        print(f"Debug: Found these exercises for {region_name}: {region_exercises}")
         
         # Get all exercise variations including dominance
         variations = []
@@ -619,7 +604,6 @@ class MatrixGenerator:
         
         # Special handling for Press/Pull exercises - make sure all variants are included
         if region_name == 'Press/Pull':
-            print(f"Debug: ALL_EXERCISES list: {self.exercises}")
             press_pull_exercises = [
                 'Horizontal Row (One Hand) (Dominant)', 
                 'Horizontal Row (One Hand) (Non-Dominant)',
@@ -631,20 +615,6 @@ class MatrixGenerator:
             for ex in press_pull_exercises:
                 if ex not in variations and ex in self.exercises:
                     variations.append(ex)
-                    print(f"Debug: Added missing Press/Pull exercise to variations: {ex}")
-        
-        print(f"Debug: Exercise variations for {region_name}: {variations}")
-        
-        # Explicitly check the data for Press/Pull exercises
-        if region_name == 'Press/Pull':
-            press_pull_data = df[df['full_exercise_name'].str.contains('Horizontal Row|Chest Press', na=False)]
-            if not press_pull_data.empty:
-                print(f"Debug: Found {len(press_pull_data)} Press/Pull exercise entries in dataset")
-                sample = press_pull_data.head(5)
-                for _, row in sample.iterrows():
-                    print(f"Debug: Sample data - User: {row['user name']}, Exercise: {row['full_exercise_name']}, Power: {row['power - high']}, Accel: {row['acceleration - high']}")
-            else:
-                print("Debug: No Press/Pull exercise data found in dataset!")
         
         # Get users with multiple tests
         multi_test_users = []
@@ -654,21 +624,12 @@ class MatrixGenerator:
             if matrices[2] is not None:  # If development matrices exist
                 power_dev = matrices[2]  # Get power development matrix
                 
-                # For Press/Pull region, check if the user has Press/Pull exercises specifically
-                if region_name == 'Press/Pull':
-                    user_has_press_pull = any(ex in power_dev.index for ex in variations)
-                    if user_has_press_pull:
-                        print(f"Debug: User {user} has Press/Pull exercises")
-                    
                 # Check if user has multiple tests
                 if len(power_dev.columns) >= 2:
                     multi_test_users.append(user)
                 
         if not multi_test_users:
-            print(f"Debug: No multi-test users found for {region_name}")
             return None, None, None, None  # Return None if no multi-test users
-        
-        print(f"Debug: Found {len(multi_test_users)} multi-test users")
 
         # Initialize DataFrames for power and acceleration
         power_df = pd.DataFrame(

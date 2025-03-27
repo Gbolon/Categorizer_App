@@ -77,30 +77,20 @@ for sex in ['male', 'female']:
 
 def get_base_exercise_name(full_exercise_name):
     """Extract base exercise name from full name including dominance."""
-    # Debug output for Press/Pull exercises
-    if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
-        print(f"Debug: Extracting base name from '{full_exercise_name}'")
-    
     # Handle exercises with "One Hand" in the name differently
     if 'One Hand' in full_exercise_name and '(' in full_exercise_name:
         # For exercises like "Horizontal Row (One Hand) (Dominant)"
         # We want to return "Horizontal Row (One Hand)" as the base name
         if full_exercise_name.count('(') > 1:
             base = full_exercise_name.rsplit('(', 1)[0].strip()
-            if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
-                print(f"Debug: Multiple parens found, returning '{base}'")
             return base
     
     # Standard case for exercises without "One Hand" in base name
     if '(' in full_exercise_name:
         base = full_exercise_name.split('(')[0].strip()
-        if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
-            print(f"Debug: Standard case, returning '{base}'")
         return base
         
     # No parens, return as is
-    if 'Horizontal Row' in full_exercise_name or 'Chest Press' in full_exercise_name:
-        print(f"Debug: No parens found, returning full name")
     return full_exercise_name
 
 def calculate_development_score(value, exercise_name, sex, metric_type='power'):
@@ -110,19 +100,6 @@ def calculate_development_score(value, exercise_name, sex, metric_type='power'):
 
     base_exercise = get_base_exercise_name(exercise_name)
     standards = POWER_STANDARDS if metric_type == 'power' else ACCELERATION_STANDARDS
-
-    # Add debug for Press/Pull exercises
-    if 'Horizontal Row' in exercise_name or 'Chest Press' in exercise_name:
-        print(f"Debug: Calculating dev score for {exercise_name}, base: {base_exercise}, sex: {sex}, type: {metric_type}")
-        print(f"Debug: Value = {value}")
-        if sex not in standards:
-            print(f"Debug: Sex '{sex}' not in standards")
-        elif base_exercise not in standards[sex]:
-            print(f"Debug: Exercise '{base_exercise}' not in standards for {sex}")
-        else:
-            goal_standard = standards[sex][base_exercise]
-            score = (value / goal_standard) * 100
-            print(f"Debug: Goal standard = {goal_standard}, Score = {score}")
 
     if sex not in standards or base_exercise not in standards[sex]:
         return None

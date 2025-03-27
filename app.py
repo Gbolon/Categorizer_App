@@ -20,15 +20,6 @@ def main():
     # Initialize processors
     data_processor = DataProcessor()
     matrix_generator = MatrixGenerator()
-    
-    # Debug: Print available exercises to make sure Press/Pull exercises are included
-    st.sidebar.write("Debug: Available Exercises")
-    from exercise_constants import ALL_EXERCISES
-    for region, exercises in VALID_EXERCISES.items():
-        st.sidebar.write(f"**{region}**")
-        region_exercises = [ex for ex in ALL_EXERCISES if any(base in ex for base in exercises)]
-        for ex in region_exercises:
-            st.sidebar.write(f"- {ex}")
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
