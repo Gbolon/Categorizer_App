@@ -622,3 +622,93 @@ class MatrixGenerator:
                     accel_df.loc[idx, col] = np.nan
 
         return power_df, accel_df
+        
+    def calculate_torso_test_changes(self, df, max_tests=4):
+        """
+        Calculate test-to-test changes for torso region movements.
+        Returns the average change between consecutive tests for power and acceleration.
+        """
+        # Import constants
+        from exercise_constants import VALID_EXERCISES
+        
+        # Get torso exercises
+        torso_exercises = VALID_EXERCISES.get('Torso', [])
+        
+        # Get all exercise variations including dominance
+        variations = []
+        for exercise in torso_exercises:
+            # Include base exercises and variations with dominance
+            matching = [ex for ex in self.exercises if exercise in ex]
+            variations.extend(matching)
+            
+        # Initialize dictionaries to track changes between tests
+        power_changes = {
+            'Test 1-2': [],
+            'Test 2-3': [],
+            'Test 3-4': []
+        }
+        
+        accel_changes = {
+            'Test 1-2': [],
+            'Test 2-3': [],
+            'Test 3-4': []
+        }
+        
+        # Process each user
+        for user in df['user name'].unique():
+            # Generate matrices for user
+            matrices = self.generate_user_matrices(df, user)
+            if matrices[2] is not None:  # If development matrices exist
+                power_dev, accel_dev = matrices[2], matrices[3]  # Get development matrices
+                
+                # Only process multi-test users
+                if len(power_dev.columns) >= 2:
+                    # Calculate changes for each consecutive test pair
+                    for i in range(min(len(power_dev.columns) - 1, max_tests - 1)):
+                        current_test = f'Test {i+1}'
+                        next_test = f'Test {i+2}'
+                        change_key = f'Test {i+1}-{i+2}'
+                        
+                        # Calculate changes for each torso exercise
+                        for exercise in variations:
+                            if exercise in power_dev.index:
+                                # Power changes
+                                current_power = power_dev.loc[exercise, current_test]
+                                next_power = power_dev.loc[exercise, next_test]
+                                if pd.notna(current_power) and pd.notna(next_power):
+                                    power_change = next_power - current_power
+                                    power_changes[change_key].append(power_change)
+                                
+                                # Acceleration changes
+                                current_accel = accel_dev.loc[exercise, current_test]
+                                next_accel = accel_dev.loc[exercise, next_test]
+                                if pd.notna(current_accel) and pd.notna(next_accel):
+                                    accel_change = next_accel - current_accel
+                                    accel_changes[change_key].append(accel_change)
+        
+        # Calculate average changes for each period
+        avg_power_changes = {}
+        avg_accel_changes = {}
+        
+        for period in power_changes.keys():
+            power_vals = power_changes[period]
+            accel_vals = accel_changes[period]
+            
+            avg_power = np.mean(power_vals) if power_vals else np.nan
+            avg_accel = np.mean(accel_vals) if accel_vals else np.nan
+            
+            avg_power_changes[period] = {
+                'Average Change': avg_power,
+                'Number of Data Points': len(power_vals)
+            }
+            
+            avg_accel_changes[period] = {
+                'Average Change': avg_accel,
+                'Number of Data Points': len(accel_vals)
+            }
+        
+        # Create DataFrames for the results
+        power_result = pd.DataFrame(avg_power_changes).T
+        accel_result = pd.DataFrame(avg_accel_changes).T
+        
+        return power_result, accel_result
