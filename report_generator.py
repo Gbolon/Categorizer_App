@@ -458,8 +458,48 @@ class PDFReportGenerator:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
             img_path = tmp_file.name
         
-        # Export the figure to the temporary file
-        fig.write_image(img_path, width=800, height=500)
+        try:
+            # Try to export the figure to the temporary file using kaleido if available
+            fig.write_image(img_path, width=800, height=500)
+        except Exception as e:
+            print(f"Warning: Could not export Plotly figure to image: {str(e)}")
+            print("Creating a simple placeholder image instead.")
+            # Create a simple placeholder image using PIL instead
+            from PIL import Image, ImageDraw, ImageFont
+            width, height = 800, 500
+            img = Image.new('RGB', (width, height), color=(240, 240, 240))
+            d = ImageDraw.Draw(img)
+            
+            # Draw a border
+            d.rectangle([(0, 0), (width-1, height-1)], outline=(200, 200, 200), width=2)
+            
+            # Add text explaining the missing visualization
+            text = "Visualization Placeholder\n(Plotly export requires kaleido package)"
+            
+            # Position the text in the center
+            try:
+                # Try to load a font, but use default if not available
+                font = ImageFont.truetype("Arial", 20)
+            except IOError:
+                font = ImageFont.load_default()
+                
+            # Draw the text in the center
+            # Different handling based on PIL version (textsize is deprecated in newer versions)
+            if hasattr(d, 'textsize'):
+                text_width, text_height = d.textsize(text, font=font)
+            elif hasattr(font, 'getbbox'):
+                # Newer PIL versions
+                bbox = font.getbbox(text)
+                text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            else:
+                # Fallback estimates
+                text_width, text_height = 300, 50
+                
+            position = ((width - text_width) // 2, (height - text_height) // 2)
+            d.text(position, text, fill=(50, 50, 50), font=font)
+            
+            # Save the image
+            img.save(img_path)
         
         return img_path
     
