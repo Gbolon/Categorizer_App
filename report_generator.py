@@ -439,8 +439,17 @@ class PDFReportGenerator:
         multi_test_count = 0
         for user in df['user name'].unique():
             user_df = df[df['user name'] == user]
-            if len(user_df['test instance'].unique()) > 1:
-                multi_test_count += 1
+            # Get unique test dates by extracting date part from exercise createdAt
+            if 'exercise createdAt' in user_df.columns:
+                # Count as multi-test if user has exercises on multiple dates
+                test_dates = user_df['exercise createdAt'].dt.date.unique()
+                if len(test_dates) > 1:
+                    multi_test_count += 1
+            else:
+                # Fallback: use matrices generation to determine if user has multiple tests
+                power_df, _, _, _, _, _, _ = self.matrix_generator.generate_user_matrices(df, user)
+                if power_df is not None and power_df.shape[1] > 1:
+                    multi_test_count += 1
         return multi_test_count
     
     def _plotly_to_image(self, fig):
