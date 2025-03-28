@@ -471,7 +471,7 @@ class PDFReportGenerator:
             d = ImageDraw.Draw(img)
             
             # Draw a border
-            d.rectangle([(0, 0), (width-1, height-1)], outline=(200, 200, 200), width=2)
+            d.rectangle(((0, 0), (width-1, height-1)), outline=(200, 200, 200), width=2)
             
             # Add text explaining the missing visualization
             text = "Visualization Placeholder\n(Plotly export requires kaleido package)"
@@ -575,12 +575,20 @@ class PDFReportGenerator:
         # Create data for plotting
         regions = df.columns.tolist()
         
+        # Check if df is a Styler object and convert to DataFrame if needed
+        if hasattr(df, 'data'):
+            # For Styler objects, access the underlying DataFrame
+            df_data = df.data
+        else:
+            # It's already a DataFrame
+            df_data = df
+            
         fig = go.Figure()
         
         # Add bars for power
         fig.add_trace(go.Bar(
             x=regions,
-            y=df.loc['Power Average'],
+            y=df_data.loc['Power Average'],
             name='Power',
             marker_color='#3498db'
         ))
@@ -588,7 +596,7 @@ class PDFReportGenerator:
         # Add bars for acceleration
         fig.add_trace(go.Bar(
             x=regions,
-            y=df.loc['Acceleration Average'],
+            y=df_data.loc['Acceleration Average'],
             name='Acceleration',
             marker_color='#2ecc71'
         ))
