@@ -593,21 +593,29 @@ class PDFReportGenerator:
             
         fig = go.Figure()
         
-        # Add bars for power
-        fig.add_trace(go.Bar(
-            x=regions,
-            y=df_data.loc['Power Average'],
-            name='Power',
-            marker_color='#3498db'
-        ))
+        # Make sure we're working with a dataframe, not a styler
+        if hasattr(df_data, 'data'):
+            df_data = df_data.data
+            
+        # Check if Power Average exists in the index
+        if 'Power Average' in df_data.index:
+            # Add bars for power
+            fig.add_trace(go.Bar(
+                x=regions,
+                y=df_data.loc['Power Average'],
+                name='Power',
+                marker_color='#3498db'
+            ))
         
-        # Add bars for acceleration
-        fig.add_trace(go.Bar(
-            x=regions,
-            y=df_data.loc['Acceleration Average'],
-            name='Acceleration',
-            marker_color='#2ecc71'
-        ))
+        # Check if Acceleration Average exists in the index
+        if 'Acceleration Average' in df_data.index:
+            # Add bars for acceleration
+            fig.add_trace(go.Bar(
+                x=regions,
+                y=df_data.loc['Acceleration Average'],
+                name='Acceleration',
+                marker_color='#2ecc71'
+            ))
         
         # Layout
         fig.update_layout(
