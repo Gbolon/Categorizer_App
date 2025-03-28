@@ -706,7 +706,45 @@ class MatrixGenerator:
         power_changes = self.calculate_test_changes(power_df)
         accel_changes = self.calculate_test_changes(accel_df)
         
-        return power_df, accel_df, power_changes, accel_changes
+        # Find exercise with lowest change for Test 1 to Test 2
+        lowest_power_change_exercise = None
+        lowest_power_change_value = float('inf')
+        lowest_accel_change_exercise = None
+        lowest_accel_change_value = float('inf')
+
+        # Find exercise with lowest change from Test 1 to Test 2
+        if 'Test 1' in power_df.columns and 'Test 2' in power_df.columns:
+            for exercise in variations:
+                if exercise in power_df.index:
+                    test1_value = power_df.loc[exercise, 'Test 1']
+                    test2_value = power_df.loc[exercise, 'Test 2']
+                    
+                    if pd.notna(test1_value) and pd.notna(test2_value) and test1_value > 0:
+                        change_pct = ((test2_value - test1_value) / test1_value) * 100
+                        if change_pct < lowest_power_change_value:
+                            lowest_power_change_value = change_pct
+                            lowest_power_change_exercise = exercise
+
+        # Do similar calculation for acceleration
+        if 'Test 1' in accel_df.columns and 'Test 2' in accel_df.columns:
+            for exercise in variations:
+                if exercise in accel_df.index:
+                    test1_value = accel_df.loc[exercise, 'Test 1']
+                    test2_value = accel_df.loc[exercise, 'Test 2']
+                    
+                    if pd.notna(test1_value) and pd.notna(test2_value) and test1_value > 0:
+                        change_pct = ((test2_value - test1_value) / test1_value) * 100
+                        if change_pct < lowest_accel_change_value:
+                            lowest_accel_change_value = change_pct
+                            lowest_accel_change_exercise = exercise
+        
+        # Handle case where no valid comparisons were found
+        if lowest_power_change_value == float('inf'):
+            lowest_power_change_value = None
+        if lowest_accel_change_value == float('inf'):
+            lowest_accel_change_value = None
+        
+        return power_df, accel_df, power_changes, accel_changes, lowest_power_change_exercise, lowest_power_change_value, lowest_accel_change_exercise, lowest_accel_change_value
             
     def get_torso_region_metrics(self, df, max_tests=4):
         """
