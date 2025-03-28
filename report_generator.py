@@ -328,8 +328,14 @@ class PDFReportGenerator:
             # Combine all region data into one dataframe for comparison
             summary_data = {}
             for region, averages in body_region_averages.items():
-                if not averages.empty:
-                    summary_data[region] = averages['Overall']
+                # Check if averages is a Styler and get the underlying data
+                if hasattr(averages, 'data'):
+                    df_data = averages.data
+                else:
+                    df_data = averages
+                    
+                if not df_data.empty and 'Overall' in df_data.columns:
+                    summary_data[region] = df_data['Overall']
             
             if summary_data:
                 summary_df = pd.DataFrame(summary_data)

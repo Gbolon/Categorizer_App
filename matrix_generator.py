@@ -537,6 +537,9 @@ class MatrixGenerator:
                     body_region_averages[region][test] = body_region_averages[region][test] / n_users
                 else:
                     body_region_averages[region][test] = np.nan
+            
+            # Add an Overall column for each region that is the mean of all test columns
+            body_region_averages[region]['Overall'] = body_region_averages[region].mean(axis=1)
 
         return body_region_averages
         
