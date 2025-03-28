@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
+from report_generator import PDFReportGenerator
 
 # Configure the page at the very beginning
 st.set_page_config(
@@ -252,6 +254,43 @@ def main():
                     else:
                         st.info(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.")
 
+            # Coach PDF Report Generation
+            st.markdown("<h2 style='font-size: 1.875em;'>Coach PDF Report</h2>", unsafe_allow_html=True)
+            st.write("Generate a comprehensive PDF report with group-level analysis for coaches")
+            
+            with st.expander("PDF Report Options", expanded=True):
+                st.write("The PDF report includes the following sections:")
+                st.markdown("""
+                - **Cover Page** with summary statistics
+                - **Executive Summary** with key metrics and findings
+                - **Group Analysis** with transition matrices and bracket distribution
+                - **Body Region Analysis** with detailed metrics for each region
+                """)
+                
+                # Add PDF generation button
+                if st.button("Generate Coach PDF Report"):
+                    with st.spinner("Generating PDF report... This may take a moment"):
+                        # Initialize report generator
+                        report_generator = PDFReportGenerator(data_processor, matrix_generator)
+                        
+                        # Generate the report
+                        pdf_path = report_generator.generate_report(processed_df)
+                        
+                        # Provide download button once generated
+                        with open(pdf_path, "rb") as pdf_file:
+                            pdf_bytes = pdf_file.read()
+                        
+                        st.success("PDF report generated successfully!")
+                        st.download_button(
+                            label="Download PDF Report",
+                            data=pdf_bytes,
+                            file_name="coach_analysis_report.pdf",
+                            mime="application/pdf"
+                        )
+                        
+                        # Clean up the temporary file
+                        if os.path.exists(pdf_path):
+                            os.remove(pdf_path)
 
             # User selection for individual analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Individual User Analysis</h2>", unsafe_allow_html=True)
