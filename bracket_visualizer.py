@@ -105,10 +105,16 @@ class BracketVisualizer:
         # Create node labels with counts
         node_labels = self.bracket_order.copy()
         
+        # First, ensure we have a DataFrame, not a Styler
+        if hasattr(transition_matrix, 'data'):
+            df = transition_matrix.data
+        else:
+            df = transition_matrix
+        
         # Calculate flows
         for i, from_bracket in enumerate(self.bracket_order):
             for j, to_bracket in enumerate(self.bracket_order):
-                flow = transition_matrix.loc[from_bracket, to_bracket]
+                flow = df.loc[from_bracket, to_bracket]
                 if flow > 0:
                     source.append(i)
                     target.append(j)
