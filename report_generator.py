@@ -513,6 +513,10 @@ class PDFReportGenerator:
     
     def _dataframe_to_table(self, df, format_func=None):
         """Convert a DataFrame to a formatted ReportLab Table."""
+        # First, ensure we have a DataFrame, not a Styler
+        if hasattr(df, 'data'):
+            df = df.data
+            
         # Extract data from DataFrame
         data = [df.columns.tolist()]  # Header row
         for i, row in df.iterrows():
