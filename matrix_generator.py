@@ -707,12 +707,16 @@ class MatrixGenerator:
         accel_changes = self.calculate_test_changes(accel_df)
         
         # Find exercise with lowest change for Test 1 to Test 2
+        # We want to prioritize negative changes, then smallest positive changes
         lowest_power_change_exercise = None
-        lowest_power_change_value = float('inf')
+        lowest_power_change_value = None
+        has_negative_power = False
+        
         lowest_accel_change_exercise = None
-        lowest_accel_change_value = float('inf')
+        lowest_accel_change_value = None
+        has_negative_accel = False
 
-        # Find exercise with lowest change from Test 1 to Test 2
+        # Find exercise with lowest change from Test 1 to Test 2 for power
         if 'Test 1' in power_df.columns and 'Test 2' in power_df.columns:
             for exercise in variations:
                 if exercise in power_df.index:
@@ -721,7 +725,17 @@ class MatrixGenerator:
                     
                     if pd.notna(test1_value) and pd.notna(test2_value) and test1_value > 0:
                         change_pct = ((test2_value - test1_value) / test1_value) * 100
-                        if change_pct < lowest_power_change_value:
+                        
+                        # If this is a negative change and we haven't found one yet, or
+                        # if we already have negative changes and this one is more negative
+                        if change_pct < 0:
+                            if not has_negative_power or change_pct < lowest_power_change_value:
+                                has_negative_power = True
+                                lowest_power_change_value = change_pct
+                                lowest_power_change_exercise = exercise
+                        # If we don't have any negative changes yet and this is a smaller positive
+                        # change than we've seen so far (or we haven't seen any yet)
+                        elif not has_negative_power and (lowest_power_change_value is None or change_pct < lowest_power_change_value):
                             lowest_power_change_value = change_pct
                             lowest_power_change_exercise = exercise
 
@@ -734,15 +748,19 @@ class MatrixGenerator:
                     
                     if pd.notna(test1_value) and pd.notna(test2_value) and test1_value > 0:
                         change_pct = ((test2_value - test1_value) / test1_value) * 100
-                        if change_pct < lowest_accel_change_value:
+                        
+                        # Prioritize negative changes
+                        if change_pct < 0:
+                            if not has_negative_accel or change_pct < lowest_accel_change_value:
+                                has_negative_accel = True
+                                lowest_accel_change_value = change_pct
+                                lowest_accel_change_exercise = exercise
+                        # Then consider smallest positive changes
+                        elif not has_negative_accel and (lowest_accel_change_value is None or change_pct < lowest_accel_change_value):
                             lowest_accel_change_value = change_pct
                             lowest_accel_change_exercise = exercise
         
-        # Handle case where no valid comparisons were found
-        if lowest_power_change_value == float('inf'):
-            lowest_power_change_value = None
-        if lowest_accel_change_value == float('inf'):
-            lowest_accel_change_value = None
+        # We already initialized values to None, so no further handling needed
         
         return power_df, accel_df, power_changes, accel_changes, lowest_power_change_exercise, lowest_power_change_value, lowest_accel_change_exercise, lowest_accel_change_value
             

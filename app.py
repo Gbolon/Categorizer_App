@@ -162,7 +162,7 @@ def main():
                     st.write(f"Separate power and acceleration metrics for {region.lower()} region movements (multi-test users only)")
                     
                     # Get detailed region metrics using the generalized function for all regions
-                    power_df, accel_df, power_changes, accel_changes = matrix_generator.get_region_metrics(processed_df, region)
+                    power_df, accel_df, power_changes, accel_changes, lowest_power_exercise, lowest_power_value, lowest_accel_exercise, lowest_accel_value = matrix_generator.get_region_metrics(processed_df, region)
             
                     if power_df is not None and accel_df is not None:
                         # Create two columns for power and acceleration
@@ -197,6 +197,17 @@ def main():
                                             f"{change:.1f}%",
                                             delta=f"{change:.1f}%"
                                         )
+                                
+                                # Display exercise with lowest change (if available)
+                                if lowest_power_exercise is not None and lowest_power_value is not None:
+                                    st.write("**Exercise with Lowest Change:**")
+                                    delta_color = "inverse" if lowest_power_value < 0 else "normal"
+                                    st.metric(
+                                        lowest_power_exercise,
+                                        f"{lowest_power_value:.1f}%",
+                                        delta=f"{lowest_power_value:.1f}%",
+                                        delta_color=delta_color
+                                    )
                         
                         with col2:
                             st.write(f"**{region} Region Acceleration Development (%)**")
@@ -227,6 +238,17 @@ def main():
                                             f"{change:.1f}%",
                                             delta=f"{change:.1f}%"
                                         )
+                                        
+                                # Display exercise with lowest change (if available)
+                                if lowest_accel_exercise is not None and lowest_accel_value is not None:
+                                    st.write("**Exercise with Lowest Change:**")
+                                    delta_color = "inverse" if lowest_accel_value < 0 else "normal"
+                                    st.metric(
+                                        lowest_accel_exercise,
+                                        f"{lowest_accel_value:.1f}%",
+                                        delta=f"{lowest_accel_value:.1f}%",
+                                        delta_color=delta_color
+                                    )
                     else:
                         st.info(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.")
 
