@@ -35,9 +35,9 @@ class PDFReportGenerator:
         
     def setup_styles(self):
         """Setup custom styles for the report."""
-        # Add custom styles
+        # Add custom styles (avoid conflicts with existing styles)
         self.styles.add(ParagraphStyle(
-            name='Title',
+            name='ReportTitle',
             parent=self.styles['Heading1'],
             fontSize=24,
             alignment=TA_CENTER,
@@ -45,7 +45,7 @@ class PDFReportGenerator:
         ))
         
         self.styles.add(ParagraphStyle(
-            name='Subtitle',
+            name='ReportSubtitle',
             parent=self.styles['Heading2'],
             fontSize=18,
             spaceAfter=12
@@ -59,14 +59,14 @@ class PDFReportGenerator:
         ))
         
         self.styles.add(ParagraphStyle(
-            name='BodyText',
+            name='ReportBodyText',
             parent=self.styles['Normal'],
             fontSize=11,
             spaceAfter=6
         ))
         
         self.styles.add(ParagraphStyle(
-            name='Caption',
+            name='ReportCaption',
             parent=self.styles['Normal'],
             fontSize=9,
             alignment=TA_CENTER,
@@ -120,7 +120,7 @@ class PDFReportGenerator:
         # Title
         title = Paragraph(
             "Exercise Development Analysis Report", 
-            self.styles['Title']
+            self.styles['ReportTitle']
         )
         elements.append(title)
         elements.append(Spacer(1, 0.5*inch))
@@ -128,7 +128,7 @@ class PDFReportGenerator:
         # Date and Time
         date_time = Paragraph(
             f"Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
-            self.styles['Subtitle']
+            self.styles['ReportSubtitle']
         )
         elements.append(date_time)
         elements.append(Spacer(1, 0.25*inch))
@@ -145,7 +145,7 @@ class PDFReportGenerator:
         ]
         
         for stat in stats:
-            elements.append(Paragraph(stat, self.styles['BodyText']))
+            elements.append(Paragraph(stat, self.styles['ReportBodyText']))
         
         return elements
         
@@ -154,7 +154,7 @@ class PDFReportGenerator:
         elements = []
         
         # Section title
-        title = Paragraph("Executive Summary", self.styles['Subtitle'])
+        title = Paragraph("Executive Summary", self.styles['ReportSubtitle'])
         elements.append(title)
         elements.append(Spacer(1, 0.1*inch))
         
@@ -173,7 +173,7 @@ class PDFReportGenerator:
             f"From test 1 to test 2, power improved by {avg_power_change_1_2:+.1f}% and "
             f"acceleration by {avg_accel_change_1_2:+.1f}%. "
             f"The average time between tests was {avg_days_between_tests:.1f} days.",
-            self.styles['BodyText']
+            self.styles['ReportBodyText']
         )
         elements.append(key_metrics)
         elements.append(Spacer(1, 0.15*inch))
@@ -217,7 +217,7 @@ class PDFReportGenerator:
                 img_path = self._plotly_to_image(fig)
                 img = Image(img_path, width=6*inch, height=4*inch)
                 elements.append(img)
-                elements.append(Paragraph("Power Development Bracket Distribution", self.styles['Caption']))
+                elements.append(Paragraph("Power Development Bracket Distribution", self.styles['ReportCaption']))
                 elements.append(Spacer(1, 0.1*inch))
                 
                 # Clean up the temporary image file
@@ -231,7 +231,7 @@ class PDFReportGenerator:
         elements = []
         
         # Section title
-        title = Paragraph("Group Development Analysis", self.styles['Subtitle'])
+        title = Paragraph("Group Development Analysis", self.styles['ReportSubtitle'])
         elements.append(title)
         elements.append(Spacer(1, 0.1*inch))
         
@@ -255,7 +255,7 @@ class PDFReportGenerator:
             "Diagonal values (blue) show users who remained in the same bracket. "
             "Above diagonal (red) shows regression to lower brackets. "
             "Below diagonal (green) shows improvement to higher brackets.",
-            self.styles['BodyText']
+            self.styles['ReportBodyText']
         )
         elements.append(reading_guide)
         elements.append(Spacer(1, 0.2*inch))
@@ -271,7 +271,7 @@ class PDFReportGenerator:
                 img_path = self._plotly_to_image(fig)
                 img = Image(img_path, width=6*inch, height=4*inch)
                 elements.append(img)
-                elements.append(Paragraph(f"Power Transitions: {period}", self.styles['Caption']))
+                elements.append(Paragraph(f"Power Transitions: {period}", self.styles['ReportCaption']))
                 elements.append(Spacer(1, 0.2*inch))
                 
                 # Clean up the temporary image file
@@ -294,7 +294,7 @@ class PDFReportGenerator:
                 img_path = self._plotly_to_image(fig)
                 img = Image(img_path, width=6*inch, height=4*inch)
                 elements.append(img)
-                elements.append(Paragraph(f"Acceleration Transitions: {period}", self.styles['Caption']))
+                elements.append(Paragraph(f"Acceleration Transitions: {period}", self.styles['ReportCaption']))
                 elements.append(Spacer(1, 0.2*inch))
                 
                 # Clean up the temporary image file
@@ -313,7 +313,7 @@ class PDFReportGenerator:
         elements = []
         
         # Section title
-        title = Paragraph("Body Region Analysis", self.styles['Subtitle'])
+        title = Paragraph("Body Region Analysis", self.styles['ReportSubtitle'])
         elements.append(title)
         elements.append(Spacer(1, 0.1*inch))
         
@@ -341,7 +341,7 @@ class PDFReportGenerator:
                 img_path = self._plotly_to_image(fig)
                 img = Image(img_path, width=6*inch, height=4*inch)
                 elements.append(img)
-                elements.append(Paragraph("Region Development Comparison", self.styles['Caption']))
+                elements.append(Paragraph("Region Development Comparison", self.styles['ReportCaption']))
                 elements.append(Spacer(1, 0.2*inch))
                 
                 # Clean up the temporary image file
@@ -393,7 +393,7 @@ class PDFReportGenerator:
                         # Create a bulleted list
                         bulleted_list = []
                         for item in changes_list:
-                            bulleted_list.append(ListItem(Paragraph(item, self.styles['BodyText'])))
+                            bulleted_list.append(ListItem(Paragraph(item, self.styles['ReportBodyText'])))
                         elements.append(ListFlowable(bulleted_list, bulletType='bullet', leftIndent=20))
                         elements.append(Spacer(1, 0.2*inch))
                 
@@ -425,11 +425,11 @@ class PDFReportGenerator:
                         # Create a bulleted list
                         bulleted_list = []
                         for item in changes_list:
-                            bulleted_list.append(ListItem(Paragraph(item, self.styles['BodyText'])))
+                            bulleted_list.append(ListItem(Paragraph(item, self.styles['ReportBodyText'])))
                         elements.append(ListFlowable(bulleted_list, bulletType='bullet', leftIndent=20))
                         elements.append(Spacer(1, 0.2*inch))
             else:
-                info_text = Paragraph(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.", self.styles['BodyText'])
+                info_text = Paragraph(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.", self.styles['ReportBodyText'])
                 elements.append(info_text)
         
         return elements
