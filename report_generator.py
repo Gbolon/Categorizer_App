@@ -334,8 +334,10 @@ class PDFReportGenerator:
                 else:
                     df_data = averages
                     
-                if not df_data.empty and 'Overall' in df_data.columns:
-                    summary_data[region] = df_data['Overall']
+                # Instead of using an 'Overall' column, we'll use 'Test 1' as reference
+                # This is a key change as we're no longer averaging across tests as requested
+                if not df_data.empty and 'Test 1' in df_data.columns:
+                    summary_data[region] = df_data['Test 1']
             
             if summary_data:
                 summary_df = pd.DataFrame(summary_data)
@@ -347,7 +349,7 @@ class PDFReportGenerator:
                 img_path = self._plotly_to_image(fig)
                 img = Image(img_path, width=6*inch, height=4*inch)
                 elements.append(img)
-                elements.append(Paragraph("Region Development Comparison", self.styles['ReportCaption']))
+                elements.append(Paragraph("Region Development Comparison (Test 1 Data)", self.styles['ReportCaption']))
                 elements.append(Spacer(1, 0.2*inch))
                 
                 # Clean up the temporary image file
@@ -609,7 +611,7 @@ class PDFReportGenerator:
         
         # Layout
         fig.update_layout(
-            title="Body Region Development Comparison",
+            title="Body Region Development Comparison (Test 1 Data)",
             xaxis_title="Body Region",
             yaxis_title="Development (%)",
             barmode='group',
