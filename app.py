@@ -5,7 +5,6 @@ from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
-from bracket_visualizer import BracketVisualizer
 
 # Configure the page at the very beginning
 st.set_page_config(
@@ -21,7 +20,6 @@ def main():
     # Initialize processors
     data_processor = DataProcessor()
     matrix_generator = MatrixGenerator()
-    bracket_visualizer = BracketVisualizer()
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
@@ -115,20 +113,6 @@ def main():
             st.write("Diagonal values (blue) show users who remained in the same bracket.")
             st.write("Above diagonal (red) shows regression to lower brackets.")
             st.write("Below diagonal (green) shows improvement to higher brackets.")
-            
-            # Add animated transitions visualization
-            st.subheader("Bracket Population Changes Over Time")
-            
-            # Create tabs for power and acceleration animated transitions
-            animate_power_tab, animate_accel_tab = st.tabs(["Power Brackets Over Time", "Acceleration Brackets Over Time"])
-            
-            with animate_power_tab:
-                animated_power_fig = bracket_visualizer.create_animated_transitions(power_transitions_detail, "Power")
-                st.plotly_chart(animated_power_fig, use_container_width=True)
-                
-            with animate_accel_tab:
-                animated_accel_fig = bracket_visualizer.create_animated_transitions(accel_transitions_detail, "Acceleration")
-                st.plotly_chart(animated_accel_fig, use_container_width=True)
 
             # Create tabs for Power and Acceleration transitions
             power_tab, accel_tab = st.tabs(["Power Transitions", "Acceleration Transitions"])
@@ -137,26 +121,14 @@ def main():
             with power_tab:
                 for period, matrix in power_transitions_detail.items():
                     st.write(f"Period: {period}")
-                    col1, col2 = st.columns([2, 3])
-                    with col1:
-                        st.dataframe(matrix, use_container_width=True)
-                    with col2:
-                        # Create and display Sankey diagram
-                        sankey_fig = bracket_visualizer.create_flow_diagram(matrix, f"Power {period}")
-                        st.plotly_chart(sankey_fig, use_container_width=True)
+                    st.dataframe(matrix, use_container_width=True)
                     st.write("---")
 
             # Acceleration transitions tab
             with accel_tab:
                 for period, matrix in accel_transitions_detail.items():
                     st.write(f"Period: {period}")
-                    col1, col2 = st.columns([2, 3])
-                    with col1:
-                        st.dataframe(matrix, use_container_width=True)
-                    with col2:
-                        # Create and display Sankey diagram
-                        sankey_fig = bracket_visualizer.create_flow_diagram(matrix, f"Acceleration {period}")
-                        st.plotly_chart(sankey_fig, use_container_width=True)
+                    st.dataframe(matrix, use_container_width=True)
                     st.write("---")
 
             # Body Region Meta Analysis
