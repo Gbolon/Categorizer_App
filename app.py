@@ -86,10 +86,12 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Power Change (Test 1→2)", f"{avg_power_change_1_2:+.1f}%",
-                         delta_color="normal")
+                         delta=f"{avg_power_change_1_2:+.1f}%",
+                         delta_color="inverse" if avg_power_change_1_2 < 0 else "normal")
             with col2:
                 st.metric("Power Change (Test 2→3)", f"{avg_power_change_2_3:+.1f}%",
-                         delta_color="normal")
+                         delta=f"{avg_power_change_2_3:+.1f}%",
+                         delta_color="inverse" if avg_power_change_2_3 < 0 else "normal")
 
             # Display Acceleration development distribution
             st.write("Multi-Test Users Acceleration Development Distribution")
@@ -100,10 +102,12 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Acceleration Change (Test 1→2)", f"{avg_accel_change_1_2:+.1f}%",
-                         delta_color="normal")
+                         delta=f"{avg_accel_change_1_2:+.1f}%",
+                         delta_color="inverse" if avg_accel_change_1_2 < 0 else "normal")
             with col2:
                 st.metric("Acceleration Change (Test 2→3)", f"{avg_accel_change_2_3:+.1f}%",
-                         delta_color="normal")
+                         delta=f"{avg_accel_change_2_3:+.1f}%",
+                         delta_color="inverse" if avg_accel_change_2_3 < 0 else "normal")
 
             # Display detailed transition analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Detailed Transition Analysis</h2>", unsafe_allow_html=True)
