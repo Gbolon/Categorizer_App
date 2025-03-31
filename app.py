@@ -1,13 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
-from bracket_visualizer import BracketVisualizer
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
-from body_heat_map import create_body_heat_map
 
 # Configure the page at the very beginning
 st.set_page_config(
@@ -140,44 +137,16 @@ def main():
 
             # Calculate body region averages
             body_region_averages = matrix_generator.calculate_body_region_averages(processed_df)
-            
-            # Calculate average percentages for each region for the heat map
-            region_scores = {}
-            for region, averages_df in body_region_averages.items():
-                # Get the "Average" row if it exists
-                if "Average" in averages_df.index:
-                    # Average across Power and Acceleration (columns)
-                    power_value = averages_df.loc["Average", "Power"]
-                    accel_value = averages_df.loc["Average", "Acceleration"]
-                    # Convert from string percentage to float if needed
-                    if isinstance(power_value, str) and '%' in power_value:
-                        power_value = float(power_value.strip('%'))
-                    if isinstance(accel_value, str) and '%' in accel_value:
-                        accel_value = float(accel_value.strip('%'))
-                    # Calculate the average of power and acceleration
-                    region_scores[region] = (power_value + accel_value) / 2
-                
-            # Create the body heat map visualization
-            map_col, table_col = st.columns([1, 3])
-            
-            with map_col:
-                # Create and display the heat map
-                if region_scores:
-                    heat_map_fig = create_body_heat_map(region_scores)
-                    st.plotly_chart(heat_map_fig, use_container_width=True)
-                else:
-                    st.info("Not enough data to generate body heat map.")
-            
-            with table_col:
-                # Create columns for each body region
-                region_cols = st.columns(len(VALID_EXERCISES))
-                
-                # Display each region's data
-                for i, (region, averages) in enumerate(body_region_averages.items()):
-                    with region_cols[i]:
-                        st.write(f"**{region}**")
-                        styled_averages = averages.style.format("{:.1f}%")
-                        st.dataframe(styled_averages)
+
+            # Create columns for each body region
+            region_cols = st.columns(len(VALID_EXERCISES))
+
+            # Display each region's data
+            for i, (region, averages) in enumerate(body_region_averages.items()):
+                with region_cols[i]:
+                    st.write(f"**{region}**")
+                    styled_averages = averages.style.format("{:.1f}%")
+                    st.dataframe(styled_averages)
             
             # Detailed Body Region Analysis
             st.markdown("<h2 style='font-size: 1.875em;'>Detailed Body Region Analysis</h2>", unsafe_allow_html=True)
