@@ -170,14 +170,7 @@ def main():
                         
                         with col1:
                             st.write(f"**{region} Region Power Development (%)**")
-                            # Apply color gradient based on positive/negative values
-                            def color_positive_negative(val):
-                                if pd.isna(val):
-                                    return ''
-                                color = 'red' if val < 0 else 'green'
-                                return f'color: {color}'
-                            
-                            styled_power = power_df.style.format("{:.1f}%").applymap(color_positive_negative)
+                            styled_power = power_df.style.format("{:.1f}%")
                             st.dataframe(styled_power)
                             
                             # Display power changes if available
@@ -215,14 +208,7 @@ def main():
                         
                         with col2:
                             st.write(f"**{region} Region Acceleration Development (%)**")
-                            # Apply color gradient based on positive/negative values
-                            def color_positive_negative(val):
-                                if pd.isna(val):
-                                    return ''
-                                color = 'red' if val < 0 else 'green'
-                                return f'color: {color}'
-                                
-                            styled_accel = accel_df.style.format("{:.1f}%").applymap(color_positive_negative)
+                            styled_accel = accel_df.style.format("{:.1f}%")
                             st.dataframe(styled_accel)
                             
                             # Display acceleration changes if available
@@ -287,24 +273,17 @@ def main():
                     st.subheader("Development Score Matrices (%)")
 
                     st.write("Power Development Matrix")
-                    # Color code the power development matrix
-                    def color_positive_negative(val):
-                        if pd.isna(val):
-                            return ''
-                        color = 'red' if val < 0 else 'green'
-                        return f'color: {color}'
-                        
-                    styled_power_dev = power_dev_matrix.style.format("{:.1f}%").applymap(color_positive_negative)
+                    styled_power_dev = power_dev_matrix.style.format("{:.1f}%")
                     st.dataframe(styled_power_dev)
 
                     st.write("Acceleration Development Matrix")
-                    styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%").applymap(color_positive_negative)
+                    styled_accel_dev = accel_dev_matrix.style.format("{:.1f}%")
                     st.dataframe(styled_accel_dev)
 
                     # Display overall development categorization
                     if overall_dev_matrix is not None:
                         st.subheader("Overall Development Categorization")
-                        styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%").applymap(color_positive_negative)
+                        styled_overall_dev = overall_dev_matrix.style.format("{:.1f}%")
                         st.dataframe(styled_overall_dev)
 
                     # Display development brackets
