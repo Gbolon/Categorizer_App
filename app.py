@@ -201,13 +201,10 @@ def main():
                                 # Display exercise with lowest change (if available)
                                 if lowest_power_exercise is not None and lowest_power_value is not None:
                                     st.write("**Exercise with Lowest Change:**")
-                                    delta_color = "inverse" if lowest_power_value < 0 else "normal"
-                                    st.metric(
-                                        lowest_power_exercise,
-                                        f"{lowest_power_value:.1f}%",
-                                        delta=f"{lowest_power_value:.1f}%",
-                                        delta_color=delta_color
-                                    )
+                                    if lowest_power_value < 0:
+                                        st.markdown(f"**{lowest_power_exercise}**: <span style='color:red'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown(f"**{lowest_power_exercise}**: <span style='color:green'>{lowest_power_value:.1f}%</span>", unsafe_allow_html=True)
                         
                         with col2:
                             st.write(f"**{region} Region Acceleration Development (%)**")
@@ -242,13 +239,10 @@ def main():
                                 # Display exercise with lowest change (if available)
                                 if lowest_accel_exercise is not None and lowest_accel_value is not None:
                                     st.write("**Exercise with Lowest Change:**")
-                                    delta_color = "inverse" if lowest_accel_value < 0 else "normal"
-                                    st.metric(
-                                        lowest_accel_exercise,
-                                        f"{lowest_accel_value:.1f}%",
-                                        delta=f"{lowest_accel_value:.1f}%",
-                                        delta_color=delta_color
-                                    )
+                                    if lowest_accel_value < 0:
+                                        st.markdown(f"**{lowest_accel_exercise}**: <span style='color:red'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
+                                    else:
+                                        st.markdown(f"**{lowest_accel_exercise}**: <span style='color:green'>{lowest_accel_value:.1f}%</span>", unsafe_allow_html=True)
                     else:
                         st.info(f"Not enough multi-test user data to display detailed {region.lower()} region analysis.")
 
