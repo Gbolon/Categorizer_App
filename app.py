@@ -330,7 +330,7 @@ def main():
                         
             # Report Generator Section
             st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
-            st.write("Generate reports with visualizations of distribution data")
+            st.write("Generate reports with visualizations of distribution data for easy sharing")
             
             report_tab1, report_tab2 = st.tabs(["Distribution Reports", "Custom Reports (Coming Soon)"])
             

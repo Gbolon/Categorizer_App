@@ -12,6 +12,7 @@ A specialized Streamlit application for advanced exercise data processing and pe
 - Separate interfaces for single-test and multi-test users
 - Visual performance tracking with interactive graphs
 - Comprehensive change metrics between test instances
+- Report generation with distribution visualizations for easy sharing
 
 ## Key Components
 
@@ -20,6 +21,7 @@ A specialized Streamlit application for advanced exercise data processing and pe
 - **Bracket Visualization**: Visual representation of performance transitions between brackets
 - **Statistical Analysis**: Calculation of performance metrics and change indicators
 - **Interactive UI**: Streamlit-powered interface with filtering and visualization tools
+- **Report Generator**: Creation of downloadable reports with visualizations
 
 ## Technologies Used
 

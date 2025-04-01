@@ -9,7 +9,7 @@ class ReportGenerator:
     """Generates reports for exercise data analysis."""
     
     def __init__(self):
-        """Initialize the report generator."""
+        """Initialize the report generator with default settings."""
         pass
     
     def generate_distribution_report(self, power_counts, accel_counts):
