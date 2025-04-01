@@ -341,11 +341,29 @@ def main():
                 report_col1, report_col2, report_col3 = st.columns(3)
                 
                 with report_col1:
-                    # HTML Report button
-                    html_report = report_generator.generate_downloadable_html(power_counts, accel_counts)
+                    # HTML Report button with transition matrices (complete report)
+                    complete_report = report_generator.generate_downloadable_html(
+                        power_counts, 
+                        accel_counts,
+                        power_transitions_detail,
+                        accel_transitions_detail
+                    )
                     st.download_button(
-                        label="Download HTML Report",
-                        data=html_report,
+                        label="Download Complete HTML Report",
+                        data=complete_report,
+                        file_name="complete_report.html",
+                        mime="text/html",
+                    )
+                
+                with report_col2:
+                    # Simple report with just distribution data
+                    simple_report = report_generator.generate_downloadable_html(
+                        power_counts, 
+                        accel_counts
+                    )
+                    st.download_button(
+                        label="Download Simple Report",
+                        data=simple_report,
                         file_name="distribution_report.html",
                         mime="text/html",
                     )
@@ -353,7 +371,11 @@ def main():
                 # Display a preview of the chart
                 fig = report_generator.create_distribution_chart(power_counts, accel_counts)
                 st.plotly_chart(fig, use_container_width=True)
-                st.caption("Preview of distribution chart included in the report")
+                st.caption("Preview of distribution chart included in both reports")
+                
+                # Add an explanation about the reports
+                st.write("**Complete Report**: Includes distribution data, visualization, and transition tables")
+                st.write("**Simple Report**: Includes only distribution data and visualization")
             
             with report_tab2:
                 st.info("Custom report generation will be available in a future update.")

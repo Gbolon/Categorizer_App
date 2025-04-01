@@ -102,13 +102,15 @@ class ReportGenerator:
         
         return fig
     
-    def _generate_html_report(self, power_counts, accel_counts):
+    def _generate_html_report(self, power_counts, accel_counts, power_transitions=None, accel_transitions=None):
         """
         Generate HTML report content.
         
         Args:
             power_counts (DataFrame): Power development distribution
             accel_counts (DataFrame): Acceleration development distribution
+            power_transitions (dict): Dictionary of power transition matrices by period
+            accel_transitions (dict): Dictionary of acceleration transition matrices by period
             
         Returns:
             str: HTML content
@@ -120,6 +122,26 @@ class ReportGenerator:
         # Convert dataframes to HTML tables
         power_table = power_counts.to_html(classes='table table-striped', index=True)
         accel_table = accel_counts.to_html(classes='table table-striped', index=True)
+        
+        # Generate transition tables HTML if provided
+        transitions_html = ""
+        if power_transitions and accel_transitions:
+            transitions_html += """
+            <h2>Transition Analysis</h2>
+            <p>Reading guide: Rows show starting bracket, columns show ending bracket. Numbers show how many users made each transition.</p>
+            """
+            
+            # Power transitions
+            transitions_html += "<h3>Power Transitions</h3>"
+            for period, matrix in power_transitions.items():
+                transitions_html += f"<h4>Period: {period}</h4>"
+                transitions_html += matrix.to_html(classes='table table-striped', index=True)
+            
+            # Acceleration transitions
+            transitions_html += "<h3>Acceleration Transitions</h3>"
+            for period, matrix in accel_transitions.items():
+                transitions_html += f"<h4>Period: {period}</h4>"
+                transitions_html += matrix.to_html(classes='table table-striped', index=True)
         
         # Create HTML content
         html_content = f"""
@@ -134,7 +156,7 @@ class ReportGenerator:
                     padding: 0;
                     color: #333;
                 }}
-                h1, h2 {{
+                h1, h2, h3, h4 {{
                     color: #2c3e50;
                 }}
                 .container {{
@@ -170,6 +192,16 @@ class ReportGenerator:
                     width: 100%;
                     margin: 25px 0;
                 }}
+                /* Transition table cell colors */
+                .diagonal {{
+                    background-color: #d4e6f1 !important; /* Pale Blue for no change */
+                }}
+                .above-diagonal {{
+                    background-color: #f5b7b1 !important; /* Pale Red for regression */
+                }}
+                .below-diagonal {{
+                    background-color: #abebc6 !important; /* Pale Green for improvement */
+                }}
             </style>
         </head>
         <body>
@@ -186,6 +218,8 @@ class ReportGenerator:
                 <div class="chart-container">
                     {chart_html}
                 </div>
+                
+                {transitions_html}
             </div>
         </body>
         </html>
@@ -193,16 +227,18 @@ class ReportGenerator:
         
         return html_content
     
-    def generate_downloadable_html(self, power_counts, accel_counts):
+    def generate_downloadable_html(self, power_counts, accel_counts, power_transitions=None, accel_transitions=None):
         """
         Generate downloadable HTML report.
         
         Args:
             power_counts (DataFrame): Power development distribution
             accel_counts (DataFrame): Acceleration development distribution
+            power_transitions (dict): Dictionary of power transition matrices by period
+            accel_transitions (dict): Dictionary of acceleration transition matrices by period
             
         Returns:
             bytes: HTML report as bytes
         """
-        html_content = self._generate_html_report(power_counts, accel_counts)
+        html_content = self._generate_html_report(power_counts, accel_counts, power_transitions, accel_transitions)
         return html_content.encode('utf-8')
