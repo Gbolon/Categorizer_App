@@ -350,20 +350,10 @@ def main():
                         mime="text/html",
                     )
                 
-                # Create tabs for different chart types
-                chart_tab1, chart_tab2 = st.tabs(["Bar Chart", "Radar Chart"])
-                
-                with chart_tab1:
-                    # Display a preview of the bar chart
-                    bar_fig = report_generator.create_distribution_chart(power_counts, accel_counts)
-                    st.plotly_chart(bar_fig, use_container_width=True)
-                    st.caption("Preview of bar chart included in the report")
-                    
-                with chart_tab2:
-                    # Display a preview of the radar chart
-                    radar_fig = report_generator.create_radar_chart(power_counts, accel_counts)
-                    st.plotly_chart(radar_fig, use_container_width=True)
-                    st.caption("Preview of radar chart included in the report")
+                # Display a preview of the chart
+                fig = report_generator.create_distribution_chart(power_counts, accel_counts)
+                st.plotly_chart(fig, use_container_width=True)
+                st.caption("Preview of distribution chart included in the report")
             
             with report_tab2:
                 st.info("Custom report generation will be available in a future update.")

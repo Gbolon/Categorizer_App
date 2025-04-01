@@ -46,22 +46,11 @@ class ReportGenerator:
         Returns:
             plotly.graph_objects.Figure: Plotly figure object
         """
-        # Make deep copies to avoid modifying the original dataframes
-        import copy
-        power_counts_filtered = copy.deepcopy(power_counts)
-        accel_counts_filtered = copy.deepcopy(accel_counts)
-        
-        # Set up the data for plotting (exclude 'Total' column if it exists)
-        test_columns = [col for col in power_counts.columns if 'Test' in col]
-        
-        # Filter out Total Users from both dataframes for chart display
+        # Extract categories and test values
         categories = power_counts.index.tolist()
-        if 'Total' in categories:
-            power_counts_filtered = power_counts_filtered.drop('Total')
-            accel_counts_filtered = accel_counts_filtered.drop('Total')
-            
-        # Get filtered categories
-        categories = power_counts_filtered.index.tolist()
+        
+        # Set up the data for plotting
+        test_columns = [col for col in power_counts.columns if 'Test' in col]
         
         # Create a figure with a single subplot for both power and acceleration
         fig = make_subplots(rows=1, cols=1)
@@ -71,7 +60,7 @@ class ReportGenerator:
             fig.add_trace(
                 go.Bar(
                     x=categories,
-                    y=power_counts_filtered[col],
+                    y=power_counts[col],
                     name=f"Power {col}",
                     marker_color='blue',
                     opacity=0.7,
@@ -84,7 +73,7 @@ class ReportGenerator:
             fig.add_trace(
                 go.Bar(
                     x=categories,
-                    y=accel_counts_filtered[col],
+                    y=accel_counts[col],
                     name=f"Acceleration {col}",
                     marker_color='green',
                     opacity=0.7,
@@ -112,95 +101,6 @@ class ReportGenerator:
         )
         
         return fig
-        
-    def create_radar_chart(self, power_counts, accel_counts):
-        """
-        Create a radar chart visualization for distribution data,
-        superimposing power and acceleration metrics.
-        
-        Args:
-            power_counts (DataFrame): Power development distribution
-            accel_counts (DataFrame): Acceleration development distribution
-            
-        Returns:
-            plotly.graph_objects.Figure: Plotly radar chart figure
-        """
-        # Make deep copies to avoid modifying the original dataframes
-        import copy
-        power_counts_filtered = copy.deepcopy(power_counts)
-        accel_counts_filtered = copy.deepcopy(accel_counts)
-        
-        # Set up the data for plotting (exclude 'Total' column if it exists)
-        test_columns = [col for col in power_counts.columns if 'Test' in col]
-        
-        # Filter out Total Users from both dataframes for chart display
-        categories = power_counts.index.tolist()
-        if 'Total' in categories:
-            power_counts_filtered = power_counts_filtered.drop('Total')
-            accel_counts_filtered = accel_counts_filtered.drop('Total')
-            
-        # Get filtered categories
-        categories = power_counts_filtered.index.tolist()
-        
-        # Create a blank figure
-        fig = go.Figure()
-        
-        # Add traces for power data
-        for i, col in enumerate(test_columns):
-            fig.add_trace(
-                go.Scatterpolar(
-                    r=power_counts_filtered[col].values,
-                    theta=categories,
-                    name=f"Power {col}",
-                    fill='toself',
-                    fillcolor='rgba(0, 0, 255, 0.2)',
-                    line=dict(color='blue'),
-                    opacity=0.7
-                )
-            )
-        
-        # Add traces for acceleration data
-        for i, col in enumerate(test_columns):
-            fig.add_trace(
-                go.Scatterpolar(
-                    r=accel_counts_filtered[col].values,
-                    theta=categories,
-                    name=f"Acceleration {col}",
-                    fill='toself',
-                    fillcolor='rgba(0, 255, 0, 0.2)',
-                    line=dict(color='green'),
-                    opacity=0.7
-                )
-            )
-        
-        # Update layout with max range excluding Total
-        max_value = max(
-            power_counts_filtered[test_columns].values.max(),
-            accel_counts_filtered[test_columns].values.max()
-        )
-        
-        fig.update_layout(
-            title="Radar Chart: Distribution by Development Category",
-            polar=dict(
-                radialaxis=dict(
-                    visible=True,
-                    title="Number of Users",
-                    range=[0, max_value * 1.1]  # Add 10% padding to the max range
-                )
-            ),
-            showlegend=True,
-            height=600,
-            width=800,
-            legend=dict(
-                x=0.01,
-                y=0.99,
-                bgcolor='rgba(255, 255, 255, 0.7)',
-                bordercolor='rgba(0, 0, 0, 0.1)',
-                borderwidth=1
-            )
-        )
-        
-        return fig
     
     def _generate_html_report(self, power_counts, accel_counts):
         """
@@ -213,13 +113,9 @@ class ReportGenerator:
         Returns:
             str: HTML content
         """
-        # Create charts and convert to HTML
-        bar_fig = self.create_distribution_chart(power_counts, accel_counts)
-        bar_chart_html = bar_fig.to_html(full_html=False, include_plotlyjs='cdn')
-        
-        # Create radar chart
-        radar_fig = self.create_radar_chart(power_counts, accel_counts)
-        radar_chart_html = radar_fig.to_html(full_html=False, include_plotlyjs='cdn')
+        # Create a chart and convert to HTML
+        fig = self.create_distribution_chart(power_counts, accel_counts)
+        chart_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
         
         # Convert dataframes to HTML tables
         power_table = power_counts.to_html(classes='table table-striped', index=True)
@@ -286,14 +182,9 @@ class ReportGenerator:
                 <h2>Acceleration Development Distribution</h2>
                 {accel_table}
                 
-                <h2>Bar Chart Visualization</h2>
+                <h2>Distribution Visualization</h2>
                 <div class="chart-container">
-                    {bar_chart_html}
-                </div>
-                
-                <h2>Radar Chart Visualization</h2>
-                <div class="chart-container">
-                    {radar_chart_html}
+                    {chart_html}
                 </div>
             </div>
         </body>
