@@ -1,5 +1,5 @@
 [project]
-name = "categorizer-app"
+name = "Categorizer-App"
 version = "0.1.0"
 description = "Streamlit app to categorize stuff"
 authors = [{ name = "Your Name", email = "you@example.com" }]
