@@ -20,4 +20,5 @@ trafilatura = ">=2.0.0"
 [project]
 name = "categorizer-app"
 version = "0.1.0"
-dependencies = []
+description = "Dummy project file to satisfy uv"
+dependencies = ["streamlit"]
