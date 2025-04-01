@@ -49,8 +49,17 @@ class ReportGenerator:
         # Extract categories and test values
         categories = power_counts.index.tolist()
         
-        # Set up the data for plotting
+        # Set up the data for plotting (exclude 'Total' column if it exists)
         test_columns = [col for col in power_counts.columns if 'Test' in col]
+        
+        # Filter out Total Users from both dataframes for chart display
+        if 'Total' in categories:
+            power_counts_filtered = power_counts.drop('Total')
+            accel_counts_filtered = accel_counts.drop('Total')
+            categories = power_counts_filtered.index.tolist()
+        else:
+            power_counts_filtered = power_counts
+            accel_counts_filtered = accel_counts
         
         # Create a figure with a single subplot for both power and acceleration
         fig = make_subplots(rows=1, cols=1)
@@ -60,7 +69,7 @@ class ReportGenerator:
             fig.add_trace(
                 go.Bar(
                     x=categories,
-                    y=power_counts[col],
+                    y=power_counts_filtered[col],
                     name=f"Power {col}",
                     marker_color='blue',
                     opacity=0.7,
@@ -73,7 +82,7 @@ class ReportGenerator:
             fig.add_trace(
                 go.Bar(
                     x=categories,
-                    y=accel_counts[col],
+                    y=accel_counts_filtered[col],
                     name=f"Acceleration {col}",
                     marker_color='green',
                     opacity=0.7,
@@ -120,6 +129,15 @@ class ReportGenerator:
         # Set up the data for plotting (exclude 'Total' column if it exists)
         test_columns = [col for col in power_counts.columns if 'Test' in col]
         
+        # Filter out Total Users from both dataframes for chart display
+        if 'Total' in categories:
+            power_counts_filtered = power_counts.drop('Total')
+            accel_counts_filtered = accel_counts.drop('Total')
+            categories = power_counts_filtered.index.tolist()
+        else:
+            power_counts_filtered = power_counts
+            accel_counts_filtered = accel_counts
+        
         # Create a blank figure
         fig = go.Figure()
         
@@ -127,7 +145,7 @@ class ReportGenerator:
         for i, col in enumerate(test_columns):
             fig.add_trace(
                 go.Scatterpolar(
-                    r=power_counts[col].values,
+                    r=power_counts_filtered[col].values,
                     theta=categories,
                     name=f"Power {col}",
                     fill='toself',
@@ -141,7 +159,7 @@ class ReportGenerator:
         for i, col in enumerate(test_columns):
             fig.add_trace(
                 go.Scatterpolar(
-                    r=accel_counts[col].values,
+                    r=accel_counts_filtered[col].values,
                     theta=categories,
                     name=f"Acceleration {col}",
                     fill='toself',
@@ -151,17 +169,19 @@ class ReportGenerator:
                 )
             )
         
-        # Update layout
+        # Update layout with max range excluding Total
+        max_value = max(
+            power_counts_filtered[test_columns].values.max(),
+            accel_counts_filtered[test_columns].values.max()
+        )
+        
         fig.update_layout(
             title="Radar Chart: Distribution by Development Category",
             polar=dict(
                 radialaxis=dict(
                     visible=True,
                     title="Number of Users",
-                    range=[0, max(
-                        power_counts[test_columns].values.max(),
-                        accel_counts[test_columns].values.max()
-                    ) * 1.1]  # Add 10% padding to the max range
+                    range=[0, max_value * 1.1]  # Add 10% padding to the max range
                 )
             ),
             showlegend=True,
