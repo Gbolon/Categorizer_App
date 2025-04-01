@@ -101,6 +101,82 @@ class ReportGenerator:
         )
         
         return fig
+        
+    def create_radar_chart(self, power_counts, accel_counts):
+        """
+        Create a radar chart visualization for distribution data,
+        superimposing power and acceleration metrics.
+        
+        Args:
+            power_counts (DataFrame): Power development distribution
+            accel_counts (DataFrame): Acceleration development distribution
+            
+        Returns:
+            plotly.graph_objects.Figure: Plotly radar chart figure
+        """
+        # Extract categories and test values
+        categories = power_counts.index.tolist()
+        
+        # Set up the data for plotting (exclude 'Total' column if it exists)
+        test_columns = [col for col in power_counts.columns if 'Test' in col]
+        
+        # Create a blank figure
+        fig = go.Figure()
+        
+        # Add traces for power data
+        for i, col in enumerate(test_columns):
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=power_counts[col].values,
+                    theta=categories,
+                    name=f"Power {col}",
+                    fill='toself',
+                    fillcolor='rgba(0, 0, 255, 0.2)',
+                    line=dict(color='blue'),
+                    opacity=0.7
+                )
+            )
+        
+        # Add traces for acceleration data
+        for i, col in enumerate(test_columns):
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=accel_counts[col].values,
+                    theta=categories,
+                    name=f"Acceleration {col}",
+                    fill='toself',
+                    fillcolor='rgba(0, 255, 0, 0.2)',
+                    line=dict(color='green'),
+                    opacity=0.7
+                )
+            )
+        
+        # Update layout
+        fig.update_layout(
+            title="Radar Chart: Distribution by Development Category",
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    title="Number of Users",
+                    range=[0, max(
+                        power_counts[test_columns].values.max(),
+                        accel_counts[test_columns].values.max()
+                    ) * 1.1]  # Add 10% padding to the max range
+                )
+            ),
+            showlegend=True,
+            height=600,
+            width=800,
+            legend=dict(
+                x=0.01,
+                y=0.99,
+                bgcolor='rgba(255, 255, 255, 0.7)',
+                bordercolor='rgba(0, 0, 0, 0.1)',
+                borderwidth=1
+            )
+        )
+        
+        return fig
     
     def _generate_html_report(self, power_counts, accel_counts):
         """
@@ -113,9 +189,13 @@ class ReportGenerator:
         Returns:
             str: HTML content
         """
-        # Create a chart and convert to HTML
-        fig = self.create_distribution_chart(power_counts, accel_counts)
-        chart_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+        # Create charts and convert to HTML
+        bar_fig = self.create_distribution_chart(power_counts, accel_counts)
+        bar_chart_html = bar_fig.to_html(full_html=False, include_plotlyjs='cdn')
+        
+        # Create radar chart
+        radar_fig = self.create_radar_chart(power_counts, accel_counts)
+        radar_chart_html = radar_fig.to_html(full_html=False, include_plotlyjs='cdn')
         
         # Convert dataframes to HTML tables
         power_table = power_counts.to_html(classes='table table-striped', index=True)
@@ -182,9 +262,14 @@ class ReportGenerator:
                 <h2>Acceleration Development Distribution</h2>
                 {accel_table}
                 
-                <h2>Distribution Visualization</h2>
+                <h2>Bar Chart Visualization</h2>
                 <div class="chart-container">
-                    {chart_html}
+                    {bar_chart_html}
+                </div>
+                
+                <h2>Radar Chart Visualization</h2>
+                <div class="chart-container">
+                    {radar_chart_html}
                 </div>
             </div>
         </body>
