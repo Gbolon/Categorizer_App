@@ -46,20 +46,22 @@ class ReportGenerator:
         Returns:
             plotly.graph_objects.Figure: Plotly figure object
         """
-        # Extract categories and test values
-        categories = power_counts.index.tolist()
+        # Make deep copies to avoid modifying the original dataframes
+        import copy
+        power_counts_filtered = copy.deepcopy(power_counts)
+        accel_counts_filtered = copy.deepcopy(accel_counts)
         
         # Set up the data for plotting (exclude 'Total' column if it exists)
         test_columns = [col for col in power_counts.columns if 'Test' in col]
         
         # Filter out Total Users from both dataframes for chart display
+        categories = power_counts.index.tolist()
         if 'Total' in categories:
-            power_counts_filtered = power_counts.drop('Total')
-            accel_counts_filtered = accel_counts.drop('Total')
-            categories = power_counts_filtered.index.tolist()
-        else:
-            power_counts_filtered = power_counts
-            accel_counts_filtered = accel_counts
+            power_counts_filtered = power_counts_filtered.drop('Total')
+            accel_counts_filtered = accel_counts_filtered.drop('Total')
+            
+        # Get filtered categories
+        categories = power_counts_filtered.index.tolist()
         
         # Create a figure with a single subplot for both power and acceleration
         fig = make_subplots(rows=1, cols=1)
@@ -123,20 +125,22 @@ class ReportGenerator:
         Returns:
             plotly.graph_objects.Figure: Plotly radar chart figure
         """
-        # Extract categories and test values
-        categories = power_counts.index.tolist()
+        # Make deep copies to avoid modifying the original dataframes
+        import copy
+        power_counts_filtered = copy.deepcopy(power_counts)
+        accel_counts_filtered = copy.deepcopy(accel_counts)
         
         # Set up the data for plotting (exclude 'Total' column if it exists)
         test_columns = [col for col in power_counts.columns if 'Test' in col]
         
         # Filter out Total Users from both dataframes for chart display
+        categories = power_counts.index.tolist()
         if 'Total' in categories:
-            power_counts_filtered = power_counts.drop('Total')
-            accel_counts_filtered = accel_counts.drop('Total')
-            categories = power_counts_filtered.index.tolist()
-        else:
-            power_counts_filtered = power_counts
-            accel_counts_filtered = accel_counts
+            power_counts_filtered = power_counts_filtered.drop('Total')
+            accel_counts_filtered = accel_counts_filtered.drop('Total')
+            
+        # Get filtered categories
+        categories = power_counts_filtered.index.tolist()
         
         # Create a blank figure
         fig = go.Figure()
