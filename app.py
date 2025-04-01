@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from data_processor import DataProcessor
 from matrix_generator import MatrixGenerator
+from report_generator import ReportGenerator
 from exercise_constants import VALID_EXERCISES
 from goal_standards import POWER_STANDARDS, ACCELERATION_STANDARDS
 
@@ -20,6 +21,7 @@ def main():
     # Initialize processors
     data_processor = DataProcessor()
     matrix_generator = MatrixGenerator()
+    report_generator = ReportGenerator()
 
     # File upload
     uploaded_file = st.file_uploader("Upload your exercise data (CSV or Excel)", 
@@ -325,6 +327,36 @@ def main():
                             file_name=f"{selected_user}_{name}_matrix.csv",
                             mime="text/csv"
                         )
+                        
+            # Report Generator Section
+            st.markdown("<h2 style='font-size: 1.875em;'>Report Generator</h2>", unsafe_allow_html=True)
+            st.write("Generate reports with visualizations of distribution data")
+            
+            report_tab1, report_tab2 = st.tabs(["Distribution Reports", "Custom Reports (Coming Soon)"])
+            
+            with report_tab1:
+                st.write("Generate a report with power and acceleration distribution data")
+                
+                # Create columns for buttons
+                report_col1, report_col2, report_col3 = st.columns(3)
+                
+                with report_col1:
+                    # HTML Report button
+                    html_report = report_generator.generate_downloadable_html(power_counts, accel_counts)
+                    st.download_button(
+                        label="Download HTML Report",
+                        data=html_report,
+                        file_name="distribution_report.html",
+                        mime="text/html",
+                    )
+                
+                # Display a preview of the chart
+                fig = report_generator.create_distribution_chart(power_counts, accel_counts)
+                st.plotly_chart(fig, use_container_width=True)
+                st.caption("Preview of distribution chart included in the report")
+            
+            with report_tab2:
+                st.info("Custom report generation will be available in a future update.")
 
             # Display exercise information with standards
             with st.expander("View Tracked Exercises and Goal Standards"):
